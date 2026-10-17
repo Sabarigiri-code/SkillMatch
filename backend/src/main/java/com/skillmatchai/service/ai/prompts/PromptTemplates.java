@@ -84,19 +84,23 @@ public class PromptTemplates {
 
     public static final String ROADMAP_GENERATION = """
             You are a senior tech lead and university campus placement coach.
-            The student has an upcoming on-campus company recruitment drive in EXACTLY 15 TO 25 DAYS for the role: %s.
+            The student has an upcoming company campus recruitment drive in EXACTLY %d DAYS for the role: %s.
             
             The student needs to master/review the following technical skills and competencies:
             %s
             
             CRITICAL TIMELINE & PLACEMENT CRITERIA:
-            1. Total Duration: EXACTLY %d WEEKS (Days 1 to %d, matching the student's 15-25 day placement drive timeline).
-            2. Do NOT create 1 week per individual skill. Synthesize and GROUP all related skills into %d cohesive, intensive placement sprint modules:
-               - Week 1: Core Backend & Data Layer (Microservices, REST APIs, Relational DBs, NoSQL DBs, Unit Testing)
-               - Week 2: Modern Frontend & Full Stack Integration (ES6+, React, State Management, HTML5, CSS3, Modern UI)
-               - Week 3: Cloud, DevOps, System Design & Final Placement Interview Defense (Docker, AWS, Git, CI/CD, Top Technical Interview Questions)
+            1. Total Duration: EXACTLY %d DAYS (Days 1 to %d placement countdown).
+            2. Synthesize and GROUP all related skills into %d cohesive, high-yield placement sprint modules tailored to the %d-day drive timeline:
+               - For example, in a 10-Day Crash Course:
+                 * Module 1 (Days 1-2): Core Problem Solving, Data Structures & Algorithmic Patterns
+                 * Module 2 (Days 3-4): Language Core, OOP Concepts & Memory/Exception Models
+                 * Module 3 (Days 5-6): Backend Architecture, REST APIs & Database Query Optimization
+                 * Module 4 (Days 7-8): Frontend/Integration, System Design FAQs & Version Control
+                 * Module 5 (Days 9-10): High-Frequency Technical Interview Questions, Tricky Code Tracing & Project Defense
             3. INTERVIEW PREP EMPHASIS:
-               - For every week, "topics" MUST include high-frequency campus placement interview questions, tricky edge cases, and code tracing concepts.
+               - "skill": Module Title formatted with timeline indicator (e.g., "Days 1-2: Core Data Structures & Algorithms")
+               - For every module, "topics" MUST include high-frequency campus placement interview questions, tricky edge cases, and code tracing concepts.
                - "practicalTask" must be a concrete, doable rapid coding challenge / interview scenario.
                - "project" must be a practical resume project highlight that impresses technical interviewers.
             4. "estimatedTime" should specify realistic daily/weekly hours (e.g., "15 hours (Days 1-7)").
@@ -121,7 +125,7 @@ public class PromptTemplates {
                 }
               ]
             }
-            Generate the %d-week campus placement sprint roadmap now:
+            Generate the %d-day campus placement sprint roadmap now:
             """;
 
     public static final String ASSESSMENT_GENERATION = """

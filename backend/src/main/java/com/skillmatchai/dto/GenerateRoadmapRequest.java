@@ -7,6 +7,8 @@ public class GenerateRoadmapRequest {
     private List<String> skillGaps;
     private String jobMatchId;
     private Integer sprintWeeks;
+    private Integer sprintDays;
+    private String driveDate;
 
     public GenerateRoadmapRequest() {}
 
@@ -18,4 +20,8 @@ public class GenerateRoadmapRequest {
     public void setJobMatchId(String jobMatchId) { this.jobMatchId = jobMatchId; }
     public Integer getSprintWeeks() { return sprintWeeks; }
     public void setSprintWeeks(Integer sprintWeeks) { this.sprintWeeks = sprintWeeks; }
+    public Integer getSprintDays() { return sprintDays; }
+    public void setSprintDays(Integer sprintDays) { this.sprintDays = sprintDays; }
+    public String getDriveDate() { return driveDate; }
+    public void setDriveDate(String driveDate) { this.driveDate = driveDate; }
 }

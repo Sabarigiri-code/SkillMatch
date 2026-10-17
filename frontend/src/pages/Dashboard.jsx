@@ -424,8 +424,8 @@ const Dashboard = () => {
                           <div className="bg-emerald-100 p-2 rounded-lg text-emerald-600">
                              <Compass className="h-5 w-5" />
                           </div>
-                          <Badge variant="outline" className="text-xs bg-slate-50">
-                            {totalWeeks} Weeks
+                          <Badge variant="outline" className="text-xs bg-slate-50 font-semibold text-indigo-700">
+                            {roadmap.sprintDays ? `⚡ ${roadmap.sprintDays}d Sprint` : `${totalWeeks} Weeks`}
                           </Badge>
                         </div>
                         <h3 className="font-bold text-slate-900 mb-1">{roadmap.targetRole || 'Skill Development'}</h3>

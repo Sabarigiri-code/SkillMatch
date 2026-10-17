@@ -22,12 +22,24 @@ public class RoadmapAIService {
     }
 
     public RoadmapResult generateRoadmap(String targetRole, List<String> skillGaps) {
-        return generateRoadmap(targetRole, skillGaps, 3);
+        return generateRoadmap(targetRole, skillGaps, 3, null);
     }
 
     public RoadmapResult generateRoadmap(String targetRole, List<String> skillGaps, Integer sprintWeeks) {
-        int weeks = (sprintWeeks != null && sprintWeeks > 0) ? sprintWeeks : 3;
-        int days = Math.min(28, Math.max(14, weeks * 7));
+        return generateRoadmap(targetRole, skillGaps, sprintWeeks, null);
+    }
+
+    public RoadmapResult generateRoadmap(String targetRole, List<String> skillGaps, Integer sprintWeeks, Integer sprintDays) {
+        int days = (sprintDays != null && sprintDays > 0) ? sprintDays : ((sprintWeeks != null && sprintWeeks > 0) ? sprintWeeks * 7 : 21);
+        int moduleCount;
+        if (days <= 7) {
+            moduleCount = Math.max(3, days);
+        } else if (days <= 14) {
+            moduleCount = Math.max(4, Math.min(days, 5)); // e.g. 5 modules for 10-day crash course
+        } else {
+            moduleCount = Math.max(3, (int) Math.ceil(days / 7.0));
+        }
+
         int count = (skillGaps != null) ? skillGaps.size() : 0;
         
         // Build a numbered list so Gemini clearly sees each skill gap as a separate item
@@ -39,9 +51,9 @@ public class RoadmapAIService {
             }
         }
         String gapsStr = numberedGaps.toString();
-        String prompt = String.format(PromptTemplates.ROADMAP_GENERATION, targetRole, gapsStr, weeks, days, weeks, weeks);
-        logger.info("Generating {}-day ({}-week) campus placement sprint roadmap for role '{}' across {} skills: {}", 
-                days, weeks, targetRole, count, gapsStr);
+        String prompt = String.format(PromptTemplates.ROADMAP_GENERATION, days, targetRole, gapsStr, days, days, moduleCount, days, days);
+        logger.info("Generating {}-day ({}-module) campus placement sprint roadmap for role '{}' across {} skills: {}", 
+                days, moduleCount, targetRole, count, gapsStr);
         
         try {
             String rawResponse = geminiService.generateJson(prompt);

@@ -23,6 +23,8 @@ public class LearningRoadmap {
     private Integer progressPercentage;
     
     private List<RoadmapWeek> weeks;
+    private Integer sprintDays;
+    private String driveDate;
     
     private LocalDateTime generatedAt;
 
@@ -67,6 +69,10 @@ public class LearningRoadmap {
     public void setProgressPercentage(Integer progressPercentage) { this.progressPercentage = progressPercentage; }
     public List<RoadmapWeek> getWeeks() { return weeks; }
     public void setWeeks(List<RoadmapWeek> weeks) { this.weeks = weeks; }
+    public Integer getSprintDays() { return sprintDays; }
+    public void setSprintDays(Integer sprintDays) { this.sprintDays = sprintDays; }
+    public String getDriveDate() { return driveDate; }
+    public void setDriveDate(String driveDate) { this.driveDate = driveDate; }
     public LocalDateTime getGeneratedAt() { return generatedAt; }
     public void setGeneratedAt(LocalDateTime generatedAt) { this.generatedAt = generatedAt; }
 }

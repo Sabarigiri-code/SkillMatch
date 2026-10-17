@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useWorkspace } from '../context/WorkspaceContext';
-import axios from 'axios';
+import api from '../utils/api';
 import { 
   RefreshCw, CheckCircle2, CircleDashed, Clock, Lock,
   BookOpen, Code, Terminal, PlayCircle, Trophy, AlertCircle, 
   Compass, Printer, ChevronDown, ChevronUp, Zap, Star, ArrowRight,
-  Calendar, Sparkles, CheckCheck, Briefcase
+  Calendar, Sparkles, CheckCheck, Briefcase, GraduationCap,
+  Flame, Target, Mic, FileText
 } from 'lucide-react';
 import { Card, CardContent } from '../components/Card';
 import Button from '../components/Button';
@@ -42,12 +43,39 @@ const statusConfig = {
   },
 };
 
+const getTodayString = () => new Date().toISOString().split('T')[0];
+
+const getDateAfterDays = (days) => {
+  const d = new Date();
+  d.setDate(d.getDate() + Number(days));
+  return d.toISOString().split('T')[0];
+};
+
+const calculateDaysFromDate = (dateStr) => {
+  if (!dateStr) return 10;
+  try {
+    const target = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    target.setHours(0, 0, 0, 0);
+    const diffTime = target.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.max(1, diffDays);
+  } catch (e) {
+    return 10;
+  }
+};
+
 const LearningRoadmap = () => {
   const { activeJobMatchId } = useWorkspace();
   const location = useLocation();
   const navigate = useNavigate();
   const [expandedWeeks, setExpandedWeeks] = useState(new Set([0]));
-  const [sprintDuration, setSprintDuration] = useState(3); // 3 weeks (15-21 days) default
+  
+  // Student Placement Drive countdown state (defaults to 10 days as requested)
+  const [sprintDays, setSprintDays] = useState(10);
+  const [customDaysInput, setCustomDaysInput] = useState(10);
+  const [driveDate, setDriveDate] = useState(() => getDateAfterDays(10));
   const [showSprintSuccess, setShowSprintSuccess] = useState(false);
 
   const [roadmap, setRoadmap] = useState(() => {
@@ -57,6 +85,41 @@ const LearningRoadmap = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
+
+  // Sync state if roadmap already has saved sprintDays / driveDate
+  useEffect(() => {
+    if (roadmap?.sprintDays) {
+      setSprintDays(roadmap.sprintDays);
+      setCustomDaysInput(roadmap.sprintDays);
+      if (roadmap.driveDate) {
+        setDriveDate(roadmap.driveDate);
+      } else {
+        setDriveDate(getDateAfterDays(roadmap.sprintDays));
+      }
+    }
+  }, [roadmap?.sprintDays, roadmap?.driveDate]);
+
+  const handleSelectPresetDays = (days) => {
+    setSprintDays(days);
+    setCustomDaysInput(days);
+    setDriveDate(getDateAfterDays(days));
+  };
+
+  const handleCustomDaysChange = (val) => {
+    setCustomDaysInput(val);
+    const days = parseInt(val, 10);
+    if (!isNaN(days) && days > 0) {
+      setSprintDays(days);
+      setDriveDate(getDateAfterDays(days));
+    }
+  };
+
+  const handleDriveDateChange = (val) => {
+    setDriveDate(val);
+    const days = calculateDaysFromDate(val);
+    setSprintDays(days);
+    setCustomDaysInput(days);
+  };
 
   const getActiveMatchData = () => {
     if (!activeJobMatchId) return null;
@@ -97,10 +160,7 @@ const LearningRoadmap = () => {
     const matchId = activeJobMatchId || roadmap?.jobMatchId;
     if (matchId) {
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get(`http://localhost:8080/api/matches/${matchId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await api.get(`/matches/${matchId}`);
         if (res.data) {
           const s = (res.data.skillGaps && res.data.skillGaps.length > 0)
             ? res.data.skillGaps.map(g => (typeof g === 'string' ? g : g.skill))
@@ -129,17 +189,11 @@ const LearningRoadmap = () => {
     return null;
   };
 
-  const handleRegenerateSprint = async (weeks = sprintDuration) => {
+  const handleRegenerateSprint = async (days = sprintDays) => {
     setIsGenerating(true);
     setError('');
+    const targetDays = Number(days) || 10;
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError('Please log in again to regenerate your roadmap.');
-        setIsGenerating(false);
-        return;
-      }
-
       const matchInfo = await resolveSkillGaps();
       if (!matchInfo || !matchInfo.skills || matchInfo.skills.length === 0) {
         setError('Unable to find skill gaps. Please review your Job Analyzer or Skill Gaps page.');
@@ -151,12 +205,12 @@ const LearningRoadmap = () => {
         targetRole: matchInfo.role,
         skillGaps: matchInfo.skills,
         jobMatchId: matchInfo.matchId,
-        sprintWeeks: weeks
+        sprintDays: targetDays,
+        sprintWeeks: Math.max(1, Math.ceil(targetDays / 7)),
+        driveDate: driveDate || getDateAfterDays(targetDays)
       };
 
-      const res = await axios.post('http://localhost:8080/api/roadmaps/generate', reqBody, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await api.post('/roadmaps/generate', reqBody);
 
       setRoadmap(res.data);
       localStorage.setItem('activeFlow_roadmap', JSON.stringify(res.data));
@@ -176,18 +230,13 @@ const LearningRoadmap = () => {
       // 1. If we clicked a specific roadmap from the Dashboard
       if (location.state?.roadmapId) {
         try {
-          const token = localStorage.getItem('token');
-          if (token) {
-            setIsLoading(true);
-            const res = await axios.get('http://localhost:8080/api/roadmaps', {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            const specificRoadmap = res.data.find(r => r.id === location.state.roadmapId);
-            if (specificRoadmap) {
-              setRoadmap(specificRoadmap);
-              setIsLoading(false);
-              return;
-            }
+          setIsLoading(true);
+          const res = await api.get('/roadmaps');
+          const specificRoadmap = res.data.find(r => r.id === location.state.roadmapId);
+          if (specificRoadmap) {
+            setRoadmap(specificRoadmap);
+            setIsLoading(false);
+            return;
           }
         } catch(e) {
           console.error("Failed to fetch specific roadmap", e);
@@ -196,52 +245,44 @@ const LearningRoadmap = () => {
 
       // 2. If we just navigated from Skill Gaps, generate a new sprint roadmap
       if (location.state?.matchData) {
-        const token = localStorage.getItem('token');
-        if (token) {
-          setIsLoading(true);
-          try {
-            // First check if one already exists for this match
-            const res = await axios.get('http://localhost:8080/api/roadmaps', {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            const existing = res.data.find(r => r.jobMatchId === location.state.matchData.id);
-            if (existing) {
-              setRoadmap(existing);
-              setIsLoading(false);
-              return;
-            }
-
-            // Generate new sprint roadmap (3 weeks / 15-25 days default)
-            const matchData = location.state.matchData;
-            const reqBody = {
-              targetRole: matchData.jobTitle || 'Target Role',
-              skillGaps: matchData.skillGaps ? matchData.skillGaps.map(g => (typeof g === 'string' ? g : g.skill)) : (matchData.missingSkills || []),
-              jobMatchId: matchData.id,
-              sprintWeeks: 3
-            };
-
-            const generateRes = await axios.post('http://localhost:8080/api/roadmaps/generate', reqBody, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            setRoadmap(generateRes.data);
-            localStorage.setItem('activeFlow_roadmap', JSON.stringify(generateRes.data));
-          } catch(e) {
-            console.error("Failed to fetch or generate roadmap", e);
-          } finally {
+        setIsLoading(true);
+        try {
+          // First check if one already exists for this match
+          const res = await api.get('/roadmaps');
+          const existing = res.data.find(r => r.jobMatchId === location.state.matchData.id);
+          if (existing) {
+            setRoadmap(existing);
             setIsLoading(false);
+            return;
           }
-          return;
+
+          // Generate new sprint roadmap (10-day crash course default)
+          const matchData = location.state.matchData;
+          const reqBody = {
+            targetRole: matchData.jobTitle || 'Target Role',
+            skillGaps: matchData.skillGaps ? matchData.skillGaps.map(g => (typeof g === 'string' ? g : g.skill)) : (matchData.missingSkills || []),
+            jobMatchId: matchData.id,
+            sprintDays: 10,
+            sprintWeeks: 2,
+            driveDate: getDateAfterDays(10)
+          };
+
+          const generateRes = await api.post('/roadmaps/generate', reqBody);
+          setRoadmap(generateRes.data);
+          localStorage.setItem('activeFlow_roadmap', JSON.stringify(generateRes.data));
+        } catch(e) {
+          console.error("Failed to fetch or generate roadmap", e);
+        } finally {
+          setIsLoading(false);
         }
+        return;
       }
 
       // 3. Fallback: If navigating via sidebar/back button, load the active workspace's roadmap
       if (activeJobMatchId) {
         setIsLoading(true);
         try {
-          const token = localStorage.getItem('token');
-          const res = await axios.get('http://localhost:8080/api/roadmaps', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const res = await api.get('/roadmaps');
           const existing = res.data.find(r => r.jobMatchId === activeJobMatchId);
           if (existing) {
             setRoadmap(existing);
@@ -256,7 +297,6 @@ const LearningRoadmap = () => {
           setIsLoading(false);
         }
       } else {
-        // 4. No state and no active workspace
         setRoadmap(null);
         setIsLoading(false);
       }
@@ -268,12 +308,9 @@ const LearningRoadmap = () => {
   const toggleStatus = async (weekNumber, currentStatus) => {
     if (!roadmap) return;
     try {
-      const token = localStorage.getItem('token');
       const isCompleted = !currentStatus;
-      const response = await axios.put(
-        `http://localhost:8080/api/roadmaps/${roadmap.id}/progress?weekNumber=${weekNumber}&completed=${isCompleted}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await api.put(
+        `/roadmaps/${roadmap.id}/progress?weekNumber=${weekNumber}&completed=${isCompleted}`
       );
       setRoadmap(response.data);
       localStorage.setItem('activeFlow_roadmap', JSON.stringify(response.data));
@@ -304,13 +341,13 @@ const LearningRoadmap = () => {
         </div>
         <div className="text-center max-w-lg">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 mb-3">
-            <Clock className="h-3.5 w-3.5" /> 15–25 Day Campus Placement Sprint
+            <GraduationCap className="h-3.5 w-3.5" /> {sprintDays}-Day Campus Placement Sprint
           </span>
           <h2 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight mb-2">
-            {isGenerating ? 'Synthesizing High-Yield Placement Sprint...' : 'Loading Your Learning Plan...'}
+            {isGenerating ? `Synthesizing ${sprintDays}-Day Placement Crash Course...` : 'Loading Your Learning Plan...'}
           </h2>
           <p className="text-slate-600 text-sm md:text-base leading-relaxed">
-            Grouping all required technical skills into intensive 3-week modules with high-frequency campus placement interview questions, coding drills, and capstone project defenses.
+            Structuring all required technical skills into an intensive {sprintDays}-day roadmap with high-frequency campus placement interview questions, coding drills, and capstone project defenses.
           </p>
         </div>
         <div className="flex gap-2.5 mt-2">
@@ -346,6 +383,7 @@ const LearningRoadmap = () => {
   const totalWeeks = roadmap.weeks?.length || 0;
   const isMultiMonthPlan = totalWeeks > 5;
   const progress = roadmap.progressPercentage || (totalWeeks > 0 ? Math.round((completedCount / totalWeeks) * 100) : 0);
+  const activeSprintDays = roadmap.sprintDays || sprintDays || (totalWeeks * 7);
 
   return (
     <div className="roadmap-print-root max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-16">
@@ -356,7 +394,7 @@ const LearningRoadmap = () => {
           <div className="flex items-center gap-3">
             <CheckCheck className="h-5 w-5 text-emerald-600 shrink-0" />
             <p className="text-sm font-semibold">
-              ✨ 15–25 Day Campus Placement Sprint Roadmap generated! All skills synthesized with placement interview prep.
+              ✨ {activeSprintDays}-Day Campus Placement Crash Course generated! Tailored to your drive timeline with interview prep & coding drills.
             </p>
           </div>
           <button 
@@ -367,6 +405,111 @@ const LearningRoadmap = () => {
           </button>
         </div>
       )}
+
+      {/* Student Campus Placement Drive Timeline Controller */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-2 border-indigo-500/30 rounded-2xl p-6 shadow-xl text-white print:hidden relative overflow-hidden">
+        <div className="absolute top-0 right-0 -mr-10 -mt-10 w-48 h-48 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+        
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative">
+          <div className="space-y-2 max-w-xl">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 shadow-sm">
+                <GraduationCap className="h-3.5 w-3.5" /> Student Placement Drive Mode
+              </span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-300 bg-white/10 px-2.5 py-1 rounded-full">
+                <Target className="h-3 w-3 text-amber-300" /> Exact Day Countdown
+              </span>
+            </div>
+            
+            <h3 className="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+              Upcoming Campus Recruitment Drive?
+            </h3>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              Have a campus drive in <strong>10 days</strong>, <strong>7 days</strong>, or a custom date? Select your exact timeline to condense missing skills into high-yield placement modules with high-frequency interview questions, coding drills, and project defense scenarios.
+            </p>
+          </div>
+
+          {/* Quick Timeline Selector & Action */}
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/15 shrink-0 flex flex-col gap-3 min-w-[320px]">
+            <div className="text-xs font-bold uppercase tracking-wider text-indigo-200 flex items-center justify-between">
+              <span>Select Drive Timeline:</span>
+              <span className="text-amber-400 font-extrabold">{sprintDays} Days Remaining</span>
+            </div>
+
+            {/* Presets */}
+            <div className="grid grid-cols-5 gap-1.5">
+              {[
+                { days: 5, label: '5d', desc: 'Blitz' },
+                { days: 7, label: '7d', desc: '1 Wk' },
+                { days: 10, label: '10d', desc: 'Popular', highlight: true },
+                { days: 14, label: '14d', desc: '2 Wk' },
+                { days: 21, label: '21d', desc: '3 Wk' }
+              ].map(p => (
+                <button
+                  key={p.days}
+                  type="button"
+                  onClick={() => handleSelectPresetDays(p.days)}
+                  className={cn(
+                    "flex flex-col items-center justify-center py-2 px-1 rounded-lg border text-center transition-all cursor-pointer",
+                    sprintDays === p.days
+                      ? "bg-amber-400 border-amber-300 text-slate-950 font-black shadow-md scale-105"
+                      : "bg-white/5 border-white/15 text-white/90 hover:bg-white/15"
+                  )}
+                  title={`${p.days} Days Drive Preparation`}
+                >
+                  <span className="text-sm font-black leading-none">{p.label}</span>
+                  <span className="text-[9px] uppercase tracking-tighter opacity-80 mt-0.5">{p.desc}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Exact Days Input & Date Picker */}
+            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/10">
+              <div>
+                <label className="text-[10px] font-semibold text-slate-300 block mb-1">
+                  Exact Days Left:
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="1"
+                    max="60"
+                    value={customDaysInput}
+                    onChange={(e) => handleCustomDaysChange(e.target.value)}
+                    className="w-full bg-slate-950/80 border border-white/20 rounded-lg px-2.5 py-1.5 text-xs text-white font-bold focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  />
+                  <span className="absolute right-2.5 top-1.5 text-[10px] text-slate-400 font-semibold pointer-events-none">
+                    days
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-semibold text-slate-300 block mb-1">
+                  Drive Date:
+                </label>
+                <input
+                  type="date"
+                  value={driveDate}
+                  min={getTodayString()}
+                  onChange={(e) => handleDriveDateChange(e.target.value)}
+                  className="w-full bg-slate-950/80 border border-white/20 rounded-lg px-2 py-1.5 text-xs text-white font-medium focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+              </div>
+            </div>
+
+            {/* Generate Button */}
+            <button
+              onClick={() => handleRegenerateSprint(sprintDays)}
+              disabled={isGenerating}
+              className="w-full mt-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-amber-500/20 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+            >
+              <Zap className={cn("h-4 w-4 fill-current", isGenerating && "animate-spin")} />
+              {isGenerating ? "Synthesizing Crash Course..." : `Generate ${sprintDays}-Day Crash Course`}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Campus Placement Alert Banner if previously had 29 weeks */}
       {isMultiMonthPlan && (
@@ -381,23 +524,23 @@ const LearningRoadmap = () => {
                   Campus Drive Timeline Alert
                 </span>
                 <span className="text-xs font-bold text-amber-800">
-                  ⚡ 15–25 Days to Recruitment Drive
+                  ⚡ {sprintDays} Days to Recruitment Drive
                 </span>
               </div>
               <h4 className="font-extrabold text-base md:text-lg mt-1 text-slate-900">
                 Current Plan spans {totalWeeks} weeks (~{Math.round(totalWeeks * 7 / 30)} months)
               </h4>
               <p className="text-sm text-slate-700 mt-1 max-w-2xl leading-relaxed">
-                With your campus drive arriving in <strong>15–25 days</strong>, studying 1 skill per week for 29 weeks will take too long. Condense all {totalWeeks} missing skills into an intensive <strong>3-Week Placement Sprint</strong> containing high-frequency interview questions, rapid coding drills, and project defense scenarios.
+                With your campus drive arriving in <strong>{sprintDays} days</strong>, studying 1 skill per week for {totalWeeks} weeks will take too long. Condense all {totalWeeks} missing skills into an intensive <strong>{sprintDays}-Day Placement Crash Course</strong> containing high-frequency interview questions, rapid coding drills, and project defense scenarios.
               </p>
             </div>
           </div>
           <button
-            onClick={() => handleRegenerateSprint(3)}
+            onClick={() => handleRegenerateSprint(sprintDays)}
             disabled={isGenerating}
             className="shrink-0 inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-sm shadow-md shadow-indigo-500/30 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
           >
-            <Zap className="h-4 w-4" /> Convert to 15–25 Day Sprint
+            <Zap className="h-4 w-4" /> Convert to {sprintDays}-Day Sprint
           </button>
         </div>
       )}
@@ -413,8 +556,13 @@ const LearningRoadmap = () => {
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-2 mb-3">
               <span className="inline-flex items-center gap-1.5 bg-amber-400 text-slate-950 text-xs font-black px-3 py-1 rounded-full shadow-sm">
-                <Zap className="h-3.5 w-3.5 fill-current" /> CAMPUS PLACEMENT SPRINT (15–25 DAYS)
+                <Zap className="h-3.5 w-3.5 fill-current" /> CAMPUS PLACEMENT SPRINT ({activeSprintDays} DAYS)
               </span>
+              {driveDate && (
+                <span className="inline-flex items-center gap-1 bg-white/20 text-white text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
+                  <Calendar className="h-3 w-3 text-amber-300" /> Target Drive: {driveDate}
+                </span>
+              )}
               <span className="inline-flex items-center gap-1 bg-white/20 text-white text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
                 <Sparkles className="h-3 w-3" /> All Skills Included
               </span>
@@ -441,39 +589,34 @@ const LearningRoadmap = () => {
               </div>
             </div>
 
-            {/* Sprint Duration & Actions Bar */}
+            {/* Quick Duration Switcher & Actions */}
             <div className="flex flex-wrap items-center gap-3 mt-6 print:hidden">
               <div className="inline-flex items-center rounded-xl bg-white/10 p-1 backdrop-blur-sm border border-white/20 text-xs font-semibold">
-                <button
-                  type="button"
-                  onClick={() => { setSprintDuration(3); handleRegenerateSprint(3); }}
-                  disabled={isGenerating}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg transition-all",
-                    totalWeeks === 3
-                      ? "bg-white text-indigo-900 font-bold shadow-sm"
-                      : "text-white/80 hover:text-white"
-                  )}
-                >
-                  ⚡ 3 Weeks (15–21 Days)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setSprintDuration(4); handleRegenerateSprint(4); }}
-                  disabled={isGenerating}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg transition-all",
-                    totalWeeks === 4
-                      ? "bg-white text-indigo-900 font-bold shadow-sm"
-                      : "text-white/80 hover:text-white"
-                  )}
-                >
-                  📅 4 Weeks (21–28 Days)
-                </button>
+                {[
+                  { days: 7, label: '7 Days' },
+                  { days: 10, label: '10 Days' },
+                  { days: 14, label: '14 Days' },
+                  { days: 21, label: '21 Days' }
+                ].map((item) => (
+                  <button
+                    key={item.days}
+                    type="button"
+                    onClick={() => { handleSelectPresetDays(item.days); handleRegenerateSprint(item.days); }}
+                    disabled={isGenerating}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg transition-all",
+                      activeSprintDays === item.days
+                        ? "bg-amber-400 text-slate-950 font-black shadow-sm"
+                        : "text-white/80 hover:text-white"
+                    )}
+                  >
+                    ⚡ {item.label}
+                  </button>
+                ))}
               </div>
 
               <button 
-                onClick={() => handleRegenerateSprint(sprintDuration)}
+                onClick={() => handleRegenerateSprint(activeSprintDays)}
                 disabled={isGenerating}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/15 hover:bg-white/25 border border-white/30 text-white text-sm font-semibold transition-colors backdrop-blur-sm shadow-sm"
                 title="Regenerate Placement Sprint with fresh AI synthesis"
@@ -527,17 +670,17 @@ const LearningRoadmap = () => {
           </span>
         </div>
         <div className="shrink-0 font-bold bg-white px-3 py-1 rounded-lg border border-indigo-200 text-indigo-700 shadow-sm">
-          Target: Complete in {totalWeeks <= 3 ? '15–21 Days' : '21–28 Days'}
+          Target: Complete in {activeSprintDays} Days ({driveDate ? `By ${driveDate}` : 'Crash Course'})
         </div>
       </div>
 
-      {/* Week Cards */}
+      {/* Week / Module Cards */}
       <div className="space-y-3">
         <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
           <Zap className="h-5 w-5 text-indigo-600" />
           Placement Sprint Modules
           <span className="ml-auto text-sm font-normal text-slate-500">
-            {totalWeeks} intensive {totalWeeks === 1 ? 'module' : 'modules'} total
+            {totalWeeks} intensive {totalWeeks === 1 ? 'module' : 'modules'} total ({activeSprintDays}-day schedule)
           </span>
         </h2>
 
@@ -548,9 +691,10 @@ const LearningRoadmap = () => {
           const cfg = statusConfig[status];
           const isExpanded = expandedWeeks.has(idx);
 
-          // Calculate day ranges (e.g., Days 1–7, Days 8–14, Days 15–21)
-          const startDay = (week.weekNumber - 1) * 7 + 1;
-          const endDay = week.weekNumber * 7;
+          // Calculate exact day ranges (e.g. Days 1–2, Days 3–4, Days 5–6, Days 7–8, Days 9–10)
+          const daysPerModule = Math.max(1, Math.round(activeSprintDays / totalWeeks));
+          const startDay = (idx * daysPerModule) + 1;
+          const endDay = idx === totalWeeks - 1 ? activeSprintDays : Math.min(activeSprintDays, (idx + 1) * daysPerModule);
 
           return (
             <div
@@ -579,11 +723,11 @@ const LearningRoadmap = () => {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="text-xs font-bold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-md">
-                      Days {startDay}–{endDay}
+                    <span className="text-xs font-black text-indigo-700 bg-indigo-100/90 px-2.5 py-0.5 rounded-md border border-indigo-200">
+                      Days {startDay}–{endDay} Target
                     </span>
                     <h3 className="text-base font-bold text-slate-900">
-                      Week {week.weekNumber}: {week.skill}
+                      Module {week.weekNumber}: {week.skill}
                     </h3>
                     <span className={cn('text-[10px] font-bold uppercase px-2 py-0.5 rounded-full tracking-wider', cfg.badge)}>
                       {cfg.badgeLabel}
@@ -591,7 +735,7 @@ const LearningRoadmap = () => {
                   </div>
                   <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
                     <span className="flex items-center gap-1 text-slate-600 font-semibold">
-                      <Clock className="h-3.5 w-3.5 text-indigo-500" /> {week.estimatedTime || `15 hours (Days ${startDay}-${endDay})`}
+                      <Clock className="h-3.5 w-3.5 text-indigo-500" /> {week.estimatedTime || `${Math.round((endDay - startDay + 1) * 3)} hours (Days ${startDay}-${endDay})`}
                     </span>
                     {week.topics && week.topics.length > 0 && (
                       <span className="flex items-center gap-1">
@@ -692,6 +836,28 @@ const LearningRoadmap = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Module Checkpoint Bridges: Assessment & Interview Prep */}
+                  <div className="mt-5 pt-3.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 print:hidden">
+                    <div className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                      <Target className="h-4 w-4 text-indigo-600" />
+                      <span>Ready for Days {startDay}–{endDay} verification?</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => navigate('/dashboard/assessment', { state: { skill: week.skill, roadmapId: roadmap.id } })}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200 transition-colors cursor-pointer"
+                      >
+                        <FileText className="h-3.5 w-3.5" /> Checkpoint Quiz
+                      </button>
+                      <button
+                        onClick={() => navigate('/dashboard/interview', { state: { jobTitle: roadmap.targetRole, skill: week.skill } })}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs border border-emerald-200 transition-colors cursor-pointer"
+                      >
+                        <Mic className="h-3.5 w-3.5" /> Voice Mock Interview
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -743,7 +909,7 @@ const LearningRoadmap = () => {
         </div>
         <button
           onClick={() => navigate('/dashboard/assessment', { state: { roadmapId: roadmap.id } })}
-          className="shrink-0 inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white font-bold px-6 py-3.5 rounded-xl transition-all shadow-lg active:scale-95"
+          className="shrink-0 inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white font-bold px-6 py-3.5 rounded-xl transition-all shadow-lg active:scale-95 cursor-pointer"
         >
           Start Mock Assessment <ArrowRight className="h-4 w-4" />
         </button>

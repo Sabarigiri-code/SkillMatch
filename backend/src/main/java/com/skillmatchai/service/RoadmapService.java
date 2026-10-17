@@ -44,11 +44,14 @@ public class RoadmapService {
         roadmap.setTargetRole(request.getTargetRole());
         roadmap.setProgressPercentage(0);
         roadmap.setGeneratedAt(LocalDateTime.now());
+        roadmap.setSprintDays(request.getSprintDays());
+        roadmap.setDriveDate(request.getDriveDate());
 
         RoadmapAIService.RoadmapResult aiResult = roadmapAIService.generateRoadmap(
                 request.getTargetRole(), 
                 request.getSkillGaps(),
-                request.getSprintWeeks()
+                request.getSprintWeeks(),
+                request.getSprintDays()
         );
 
         if (aiResult != null && aiResult.weeks != null) {
