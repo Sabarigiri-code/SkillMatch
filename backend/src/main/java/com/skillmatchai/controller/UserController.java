@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import com.skillmatchai.dto.ChangePasswordRequest;
 import com.skillmatchai.dto.UpdateProfileRequest;
@@ -66,6 +67,13 @@ public class UserController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    /** Deletes the authenticated user's account and all associated data */
+    @DeleteMapping("/me")
+    public ResponseEntity<?> deleteMyAccount(@AuthenticationPrincipal UserDetails userDetails) {
+        authService.deleteAccount(userDetails.getUsername());
+        return ResponseEntity.ok(Map.of("message", "Account and all associated records deleted successfully."));
     }
 }
 

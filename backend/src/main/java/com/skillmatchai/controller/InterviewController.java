@@ -45,4 +45,12 @@ public class InterviewController {
         List<Interview> history = interviewService.getInterviewHistory(userDetails.getUsername());
         return ResponseEntity.ok(history);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteInterview(
+            @PathVariable String id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        interviewService.deleteInterview(id, userDetails.getUsername());
+        return ResponseEntity.noContent().build();
+    }
 }

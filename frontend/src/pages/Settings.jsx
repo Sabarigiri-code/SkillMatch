@@ -52,6 +52,8 @@ const Settings = () => {
 
   // Modals State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   // Session Location State
@@ -165,10 +167,23 @@ const Settings = () => {
     }
   };
 
-  const handleDeleteAccount = () => {
-    setIsDeleteModalOpen(false);
-    alert('Account deleted successfully (Mock Action).');
-    window.location.href = '/';
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText.trim() !== 'DELETE') {
+      alert('Please type DELETE to confirm account deletion.');
+      return;
+    }
+    setIsDeletingAccount(true);
+    try {
+      await api.delete('/users/me');
+      localStorage.clear();
+      setIsDeleteModalOpen(false);
+      alert('Your account and all associated data have been permanently deleted.');
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Failed to delete account:', err);
+      alert('Failed to delete account. Please try again.');
+      setIsDeletingAccount(false);
+    }
   };
 
   const handleExportData = () => {
@@ -523,12 +538,21 @@ const Settings = () => {
 
       <Modal
         isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
+        onClose={() => !isDeletingAccount && setIsDeleteModalOpen(false)}
         title="Delete Account"
         footer={
           <>
-            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button>
-            <Button className="bg-rose-600 hover:bg-rose-700 text-white border-none" onClick={handleDeleteAccount}>Yes, Delete My Account</Button>
+            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)} disabled={isDeletingAccount}>
+              Cancel
+            </Button>
+            <Button 
+              className="bg-rose-600 hover:bg-rose-700 text-white border-none disabled:opacity-50" 
+              onClick={handleDeleteAccount}
+              isLoading={isDeletingAccount}
+              disabled={deleteConfirmText.trim() !== 'DELETE'}
+            >
+              Yes, Delete My Account
+            </Button>
           </>
         }
       >
@@ -542,7 +566,11 @@ const Settings = () => {
           </p>
           <div className="pt-2">
             <label className="block text-sm font-semibold text-slate-700 mb-2">Please type <span className="font-bold select-all bg-slate-100 px-1 rounded">DELETE</span> to confirm:</label>
-            <Input placeholder="Type DELETE" />
+            <Input 
+              placeholder="Type DELETE" 
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+            />
           </div>
         </div>
       </Modal>

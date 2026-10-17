@@ -12,6 +12,8 @@ import Input from '../components/Input';
 import Select from '../components/Select';
 import EmptyState from '../components/EmptyState';
 
+import Modal from '../components/Modal';
+
 const ResumeHistory = () => {
   const navigate = useNavigate();
   const [history, setHistory] = useState([]);
@@ -22,20 +24,17 @@ const ResumeHistory = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [sortBy, setSortBy] = useState('date-desc');
 
+  // Deletion modal and feedback states
+  const [resumeToDelete, setResumeToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [actionFeedback, setActionFeedback] = useState('');
+
   useEffect(() => {
     const fetchResumes = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          navigate('/');
-          return;
-        }
+        const response = await api.get('/resumes');
         
-        const response = await axios.get('http://localhost:8080/api/resumes', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        const mappedData = response.data.map(resume => {
+        const mappedData = (response.data || []).map(resume => {
           const skillsCount = resume.detectedSkills ? resume.detectedSkills.length : 0;
           // Calculate a fallback derived score for older resumes that don't have an ATS score in the DB
           const derivedScore = skillsCount > 0 ? Math.min(100, 45 + (skillsCount * 3)) : 0; 
@@ -63,13 +62,22 @@ const ResumeHistory = () => {
     fetchResumes();
   }, [navigate]);
 
-  const handleDelete = async (id) => {
+  const handleDeleteConfirm = async () => {
+    if (!resumeToDelete) return;
+    setIsDeleting(true);
+    const targetId = resumeToDelete.id;
     try {
-      await api.delete(`/resumes/${id}`);
-      setHistory(history.filter(item => item.id !== id));
+      await api.delete(`/resumes/${targetId}`);
+      setHistory(prev => prev.filter(item => item.id !== targetId));
+      setActionFeedback('Resume deleted successfully.');
+      setTimeout(() => setActionFeedback(''), 3000);
+      setResumeToDelete(null);
     } catch (err) {
       console.error("Failed to delete resume:", err);
-      setError("Failed to delete resume. Please try again.");
+      setActionFeedback('Failed to delete resume. Please try again.');
+      setTimeout(() => setActionFeedback(''), 4000);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -250,7 +258,13 @@ const ResumeHistory = () => {
                             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title="Analyze Job" onClick={() => navigate('/dashboard/jobs', { state: { resumeId: item.id } })}>
                               <Briefcase className="h-4 w-4 text-indigo-600" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-rose-50 hover:text-rose-600" title="Delete" onClick={() => handleDelete(item.id)}>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0 hover:bg-rose-50 hover:text-rose-600" 
+                              title="Delete Resume" 
+                              onClick={() => setResumeToDelete(item)}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -299,7 +313,13 @@ const ResumeHistory = () => {
                       <Button variant="outline" size="sm" className="flex-1" leftIcon={<Briefcase className="h-4 w-4 text-indigo-600" />} onClick={() => navigate('/dashboard/jobs', { state: { resumeId: item.id } })}>
                         Analyze Job
                       </Button>
-                      <Button variant="outline" size="sm" className="px-3 text-rose-600 hover:bg-rose-50 border-slate-200" onClick={() => handleDelete(item.id)}>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="px-3 text-rose-600 hover:bg-rose-50 border-slate-200" 
+                        title="Delete Resume"
+                        onClick={() => setResumeToDelete(item)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -311,6 +331,54 @@ const ResumeHistory = () => {
 
         </CardContent>
       </Card>
+      {/* Delete Resume Confirmation Modal */}
+      <Modal
+        isOpen={!!resumeToDelete}
+        onClose={() => !isDeleting && setResumeToDelete(null)}
+        title="Delete Resume"
+        footer={
+          <>
+            <Button 
+              variant="outline" 
+              onClick={() => setResumeToDelete(null)} 
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              className="bg-rose-600 hover:bg-rose-700 text-white border-none"
+              onClick={handleDeleteConfirm}
+              isLoading={isDeleting}
+              leftIcon={<Trash2 className="h-4 w-4" />}
+            >
+              Delete Resume
+            </Button>
+          </>
+        }
+      >
+        <div className="flex items-start gap-4 py-2">
+          <div className="p-3 bg-rose-100 text-rose-600 rounded-full shrink-0">
+            <AlertCircle className="h-6 w-6" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-slate-900 mb-1">
+              Delete &quot;{resumeToDelete?.name}&quot;?
+            </h4>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Are you sure you want to delete this resume? This document and its parsed skills, bullet points, and ATS evaluation will be permanently removed.
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Floating feedback notification toast */}
+      {actionFeedback && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-2 border border-slate-700 transition-all animate-in fade-in slide-in-from-bottom-2">
+          <FileText className="h-5 w-5 text-indigo-400 shrink-0" />
+          <span className="text-sm font-medium">{actionFeedback}</span>
+        </div>
+      )}
+
     </div>
   );
 };

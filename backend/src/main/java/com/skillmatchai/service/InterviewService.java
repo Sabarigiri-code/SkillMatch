@@ -136,6 +136,18 @@ public class InterviewService {
         return interviewRepository.findByUserIdOrderByConductedAtDesc(userId);
     }
 
+    public void deleteInterview(String id, String userEmail) {
+        String userId = resolveUserId(userEmail);
+        Interview interview = interviewRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Interview not found."));
+
+        if (!interview.getUserId().equals(userId)) {
+            throw new UnauthorizedResourceException();
+        }
+
+        interviewRepository.delete(interview);
+    }
+
     private String resolveUserId(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found."))

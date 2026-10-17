@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import { 
-  Award, Filter, Search, Plus, Trash2, RefreshCw, Eye
+  Award, Filter, Search, Plus, Trash2, RefreshCw, Eye, AlertCircle, CheckCircle2
 } from 'lucide-react';
 import { Card, CardContent } from '../components/Card';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import EmptyState from '../components/EmptyState';
+import Modal from '../components/Modal';
 
 const AssessmentHistory = () => {
   const [history, setHistory] = useState([]);
@@ -17,6 +18,11 @@ const AssessmentHistory = () => {
   const [sortOrder, setSortOrder] = useState('date-desc');
   const navigate = useNavigate();
 
+  // Deletion modal and feedback states
+  const [assessmentToDelete, setAssessmentToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [actionFeedback, setActionFeedback] = useState('');
+
   useEffect(() => {
     fetchHistory();
   }, []);
@@ -24,10 +30,7 @@ const AssessmentHistory = () => {
   const fetchHistory = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:8080/api/assessments/history', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/assessments/history');
       setHistory(response.data || []);
     } catch (error) {
       console.error('Failed to fetch assessment history:', error);
@@ -36,18 +39,22 @@ const AssessmentHistory = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this assessment record?')) {
-      try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`http://localhost:8080/api/assessments/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setHistory(prev => prev.filter(item => item.id !== id));
-      } catch (err) {
-        console.error("Failed to delete assessment", err);
-        alert("Failed to delete the assessment. Please try again.");
-      }
+  const handleDeleteConfirm = async () => {
+    if (!assessmentToDelete) return;
+    setIsDeleting(true);
+    const targetId = assessmentToDelete.id;
+    try {
+      await api.delete(`/assessments/${targetId}`);
+      setHistory(prev => prev.filter(item => item.id !== targetId));
+      setActionFeedback('Assessment record deleted successfully.');
+      setTimeout(() => setActionFeedback(''), 3000);
+      setAssessmentToDelete(null);
+    } catch (err) {
+      console.error("Failed to delete assessment", err);
+      setActionFeedback('Failed to delete the assessment. Please try again.');
+      setTimeout(() => setActionFeedback(''), 4000);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -198,7 +205,13 @@ const AssessmentHistory = () => {
                             >
                               <Eye className="h-4 w-4 text-slate-500" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-rose-50 hover:text-rose-600" title="Delete" onClick={() => handleDelete(item.id)}>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0 hover:bg-rose-50 hover:text-rose-600" 
+                              title="Delete Record" 
+                              onClick={() => setAssessmentToDelete(item)}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -238,7 +251,13 @@ const AssessmentHistory = () => {
                       >
                         View Results
                       </Button>
-                      <Button variant="outline" size="sm" className="px-3 text-rose-600 hover:bg-rose-50 border-slate-200" onClick={() => handleDelete(item.id)}>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="px-3 text-rose-600 hover:bg-rose-50 border-slate-200" 
+                        title="Delete Record"
+                        onClick={() => setAssessmentToDelete(item)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -250,6 +269,56 @@ const AssessmentHistory = () => {
 
         </CardContent>
       </Card>
+
+      {/* Delete Assessment Confirmation Modal */}
+      <Modal
+        isOpen={!!assessmentToDelete}
+        onClose={() => !isDeleting && setAssessmentToDelete(null)}
+        title="Delete Assessment Record"
+        footer={
+          <>
+            <Button 
+              variant="outline" 
+              onClick={() => setAssessmentToDelete(null)} 
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              className="bg-rose-600 hover:bg-rose-700 text-white border-none"
+              onClick={handleDeleteConfirm}
+              isLoading={isDeleting}
+              leftIcon={<Trash2 className="h-4 w-4" />}
+            >
+              Delete Record
+            </Button>
+          </>
+        }
+      >
+        <div className="flex items-start gap-4 py-2">
+          <div className="p-3 bg-rose-100 text-rose-600 rounded-full shrink-0">
+            <AlertCircle className="h-6 w-6" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-slate-900 mb-1">
+              Delete &quot;{assessmentToDelete?.jobTitle || assessmentToDelete?.skill || 'Assessment'}&quot;?
+            </h4>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Are you sure you want to delete this test attempt from your history? 
+              Your score ({assessmentToDelete?.score}%) and answers will be permanently removed.
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Floating feedback notification toast */}
+      {actionFeedback && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-2 border border-slate-700 transition-all animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
+          <span className="text-sm font-medium">{actionFeedback}</span>
+        </div>
+      )}
+
     </div>
   );
 };

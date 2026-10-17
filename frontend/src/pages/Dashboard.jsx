@@ -14,6 +14,8 @@ import Button from '../components/Button';
 import { cn } from '../utils/cn';
 import api from '../utils/api';
 
+import Modal from '../components/Modal';
+
 import { useWorkspace } from '../context/WorkspaceContext';
 
 const Dashboard = () => {
@@ -27,6 +29,11 @@ const Dashboard = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
+  // Deletion modal and feedback states
+  const [matchToDelete, setMatchToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [actionFeedback, setActionFeedback] = useState('');
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -37,25 +44,19 @@ const Dashboard = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleDeleteMatch = async (e, matchId) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
-    if (!window.confirm("Are you sure you want to delete this job match? This will remove it from your workspace and database.")) {
-      return;
-    }
-    
+  const handleDeleteConfirm = async () => {
+    if (!matchToDelete) return;
+    setIsDeleting(true);
+    const targetId = matchToDelete.id;
     try {
-      await api.delete(`/matches/${matchId}`);
+      await api.delete(`/matches/${targetId}`);
       
       // Update UI state immediately
-      setAllMatches(prev => prev.filter(m => m.id !== matchId));
-      setRecentMatches(prev => prev.filter(m => m.id !== matchId).slice(0, 4));
+      setAllMatches(prev => prev.filter(m => m.id !== targetId));
+      setRecentMatches(prev => prev.filter(m => m.id !== targetId).slice(0, 4));
       
       // If we deleted the active one, reset to global
-      if (activeJobMatchId === matchId) {
+      if (activeJobMatchId === targetId) {
         setActiveJobMatchId('');
         localStorage.removeItem('activeJobMatchId');
         localStorage.removeItem('activeFlow_match');
@@ -72,9 +73,16 @@ const Dashboard = () => {
 
       // Notify real-time components (e.g. Notifications bell)
       window.dispatchEvent(new CustomEvent('match-created'));
+
+      setActionFeedback('Job match deleted successfully.');
+      setTimeout(() => setActionFeedback(''), 3000);
+      setMatchToDelete(null);
     } catch (err) {
       console.error("Failed to delete job match", err);
-      alert("Failed to delete job match. Please try again.");
+      setActionFeedback('Failed to delete job match. Please try again.');
+      setTimeout(() => setActionFeedback(''), 4000);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -210,17 +218,13 @@ const Dashboard = () => {
                     </span>
                     <button 
                       type="button"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        handleDeleteMatch(e, match.id);
+                        setMatchToDelete(match);
                       }}
                       className="p-1.5 rounded-md hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition-colors shrink-0 z-10"
-                      title="Delete Job Match from Database"
+                      title="Delete Job Match from Workspace"
                     >
                       <Trash2 className="h-4 w-4 pointer-events-none" />
                     </button>
@@ -353,14 +357,31 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="h-8 w-8 p-0 shrink-0 rounded-full hover:bg-indigo-100 hover:text-indigo-600"
-                        onClick={() => navigate('/dashboard/skill-gap', { state: { matchId: match.id } })}
-                      >
-                        <ChevronRight className="h-5 w-5" />
-                      </Button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setMatchToDelete(match);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                          title="Delete Job Match"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="h-8 w-8 p-0 rounded-full hover:bg-indigo-100 hover:text-indigo-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate('/dashboard/skill-gap', { state: { matchId: match.id } });
+                          }}
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </Button>
+                      </div>
                     </div>
                   </li>
                 ))}
@@ -430,6 +451,55 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Job Match Confirmation Modal */}
+      <Modal
+        isOpen={!!matchToDelete}
+        onClose={() => !isDeleting && setMatchToDelete(null)}
+        title="Delete Job Match"
+        footer={
+          <>
+            <Button 
+              variant="outline" 
+              onClick={() => setMatchToDelete(null)} 
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              className="bg-rose-600 hover:bg-rose-700 text-white border-none"
+              onClick={handleDeleteConfirm}
+              isLoading={isDeleting}
+              leftIcon={<Trash2 className="h-4 w-4" />}
+            >
+              Delete Match
+            </Button>
+          </>
+        }
+      >
+        <div className="flex items-start gap-4 py-2">
+          <div className="p-3 bg-rose-100 text-rose-600 rounded-full shrink-0">
+            <AlertTriangle className="h-6 w-6" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-slate-900 mb-1">
+              Delete &quot;{matchToDelete?.jobTitle || 'Target Role'}&quot;?
+            </h4>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Are you sure you want to delete this job match from your workspace? 
+              This will remove the ATS compatibility breakdown and associated sprint roadmap from your database.
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Floating feedback notification toast */}
+      {actionFeedback && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-2 border border-slate-700 transition-all animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
+          <span className="text-sm font-medium">{actionFeedback}</span>
+        </div>
+      )}
 
     </div>
   );

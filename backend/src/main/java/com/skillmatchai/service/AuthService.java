@@ -23,6 +23,27 @@ public class AuthService {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.skillmatchai.repository.ResumeRepository resumeRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.skillmatchai.repository.JobMatchRepository jobMatchRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.skillmatchai.repository.LearningRoadmapRepository learningRoadmapRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.skillmatchai.repository.AssessmentRepository assessmentRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.skillmatchai.repository.InterviewRepository interviewRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.skillmatchai.repository.ProgressRepository progressRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.skillmatchai.service.resume.StorageService storageService;
+
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        JwtService jwtService,
@@ -114,6 +135,70 @@ public class AuthService {
         if (experience != null) user.setExperience(experience);
         
         return toUserResponse(userRepository.save(user));
+    }
+
+    public void deleteAccount(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new com.skillmatchai.exception.ResourceNotFoundException("User not found."));
+        String userId = user.getId();
+
+        // 1. Delete resumes & physical files
+        if (resumeRepository != null) {
+            try {
+                var resumes = resumeRepository.findByUserId(userId);
+                if (storageService != null) {
+                    for (var r : resumes) {
+                        if (r.getStoragePath() != null) {
+                            storageService.delete(r.getStoragePath());
+                        }
+                    }
+                }
+                resumeRepository.deleteAll(resumes);
+            } catch (Exception ignored) {}
+        }
+
+        // 2. Delete job matches
+        if (jobMatchRepository != null) {
+            try {
+                var matches = jobMatchRepository.findByUserIdOrderByAnalyzedAtDesc(userId);
+                jobMatchRepository.deleteAll(matches);
+            } catch (Exception ignored) {}
+        }
+
+        // 3. Delete roadmaps
+        if (learningRoadmapRepository != null) {
+            try {
+                var roadmaps = learningRoadmapRepository.findByUserIdOrderByGeneratedAtDesc(userId);
+                learningRoadmapRepository.deleteAll(roadmaps);
+            } catch (Exception ignored) {}
+        }
+
+        // 4. Delete assessments
+        if (assessmentRepository != null) {
+            try {
+                var assessments = assessmentRepository.findByUserId(userId);
+                assessmentRepository.deleteAll(assessments);
+            } catch (Exception ignored) {}
+        }
+
+        // 5. Delete interviews
+        if (interviewRepository != null) {
+            try {
+                var interviews = interviewRepository.findByUserIdOrderByConductedAtDesc(userId);
+                interviewRepository.deleteAll(interviews);
+            } catch (Exception ignored) {}
+        }
+
+        // 6. Delete progress
+        if (progressRepository != null) {
+            try {
+                var progressList = progressRepository.findByUserId(userId);
+                progressRepository.deleteAll(progressList);
+            } catch (Exception ignored) {}
+        }
+
+        // 7. Delete User entity
+        userRepository.delete(user);
     }
 
     private UserResponse toUserResponse(User user) {
