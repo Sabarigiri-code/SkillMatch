@@ -1,0 +1,438 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Target, Briefcase, Award, CheckCircle2, Clock, CircleDashed, 
+  TrendingUp, FileText, Compass, ArrowRight, Zap, AlertTriangle, 
+  ChevronRight, Activity, Trash2, ChevronDown, ChevronUp
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
+import StatCard from '../components/StatCard';
+import Badge from '../components/Badge';
+import ProgressBar from '../components/ProgressBar';
+import CircularProgress from '../components/CircularProgress';
+import Button from '../components/Button';
+import { cn } from '../utils/cn';
+import api from '../utils/api';
+
+import { useWorkspace } from '../context/WorkspaceContext';
+
+const Dashboard = () => {
+  const navigate = useNavigate();
+  const { activeJobMatchId, setActiveJobMatchId } = useWorkspace();
+  const [realStats, setRealStats] = useState(null);
+  const [recentMatches, setRecentMatches] = useState([]);
+  const [allMatches, setAllMatches] = useState([]);
+  const [activeRoadmaps, setActiveRoadmaps] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleDeleteMatch = async (e, matchId) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    if (!window.confirm("Are you sure you want to delete this job match? This will remove it from your workspace and database.")) {
+      return;
+    }
+    
+    try {
+      await api.delete(`/matches/${matchId}`);
+      
+      // Update UI state immediately
+      setAllMatches(prev => prev.filter(m => m.id !== matchId));
+      setRecentMatches(prev => prev.filter(m => m.id !== matchId).slice(0, 4));
+      
+      // If we deleted the active one, reset to global
+      if (activeJobMatchId === matchId) {
+        setActiveJobMatchId('');
+        localStorage.removeItem('activeJobMatchId');
+        localStorage.removeItem('activeFlow_match');
+        localStorage.removeItem('activeFlow_roadmap');
+      }
+
+      // Re-fetch live stats and roadmaps to reflect deletion
+      const [progressRes, roadmapsRes] = await Promise.allSettled([
+        api.get('/progress'),
+        api.get('/roadmaps')
+      ]);
+      if (progressRes.status === 'fulfilled') setRealStats(progressRes.value.data);
+      if (roadmapsRes.status === 'fulfilled') setActiveRoadmaps(roadmapsRes.value.data || []);
+
+      // Notify real-time components (e.g. Notifications bell)
+      window.dispatchEvent(new CustomEvent('match-created'));
+    } catch (err) {
+      console.error("Failed to delete job match", err);
+      alert("Failed to delete job match. Please try again.");
+    }
+  };
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const queryParam = activeJobMatchId ? `?jobMatchId=${activeJobMatchId}` : '';
+        const [progressRes, matchesRes, roadmapsRes] = await Promise.all([
+          api.get(`/progress${queryParam}`),
+          api.get('/matches'),
+          api.get('/roadmaps')
+        ]);
+        
+        setRealStats(progressRes.data);
+        
+        // Sort matches by recent first
+        const matchesData = matchesRes.data || [];
+        setAllMatches(matchesData);
+        
+        const sortedMatches = [...matchesData].reverse().slice(0, 4);
+        setRecentMatches(sortedMatches);
+        
+        // Active roadmaps
+        let roadmapsData = roadmapsRes.data || [];
+        if (activeJobMatchId) {
+            roadmapsData = roadmapsData.filter(r => r.jobMatchId === activeJobMatchId);
+        }
+        const currentRoadmaps = [...roadmapsData].slice(0, 3);
+        setActiveRoadmaps(currentRoadmaps);
+      } catch (err) {
+        console.error("Failed to load dashboard data:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchDashboardData();
+  }, [activeJobMatchId]);
+
+  if (isLoading) {
+    return <div className="flex h-full items-center justify-center py-20 text-slate-500">Loading your live dashboard...</div>;
+  }
+
+  // Check if user has uploaded a resume (bootstrap empty state)
+  const isNewUser = recentMatches.length === 0 && activeRoadmaps.length === 0 && (!realStats || realStats.resumeQualityScore === 0);
+
+  if (isNewUser) {
+    return (
+      <div className="w-full max-w-7xl mx-auto space-y-6">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900">Welcome to SkillMatch AI!</h1>
+          <p className="text-slate-500 mt-2 text-lg">Let's build your AI-powered career pipeline.</p>
+        </div>
+        
+        <Card className="bg-gradient-to-br from-indigo-50 to-white border-indigo-100 p-8 text-center">
+          <div className="flex justify-center mb-6">
+            <div className="bg-indigo-100 p-4 rounded-full">
+              <FileText className="h-10 w-10 text-indigo-600" />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-4">Start Your Journey</h2>
+          <p className="text-slate-600 max-w-xl mx-auto mb-8 text-lg">
+            Your dashboard is currently empty. To get started, upload your resume so our AI can extract your skills and begin guiding your career path.
+          </p>
+          <Button 
+            className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-lg"
+            onClick={() => navigate('/dashboard/resume')}
+          >
+            Upload Resume
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  // Data mappings
+  const careerReadiness = realStats?.overallReadinessScore || 0;
+  const jobsAnalyzed = recentMatches.length || 0;
+  const skillsVerified = realStats?.verifiedSkillsScore || 0;
+  const roadmapsStarted = activeRoadmaps.length || 0;
+
+  return (
+    <div className="w-full max-w-7xl mx-auto space-y-6 pb-12">
+      {/* Page Header */}
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Career Dashboard</h1>
+          <p className="text-slate-500 mt-2 text-lg">Track your career readiness and discover what to improve next.</p>
+        </div>
+        
+        <div className="bg-white p-3 rounded-lg border shadow-sm max-w-[320px] w-full relative" ref={dropdownRef}>
+          <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
+            Active Workspace
+          </label>
+          <div 
+            className="w-full bg-slate-50 border border-slate-200 text-sm font-medium text-slate-700 py-1.5 px-3 rounded flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
+            <span className="truncate pr-2">
+              {activeJobMatchId 
+                ? (allMatches.find(m => m.id === activeJobMatchId) 
+                    ? `${allMatches.find(m => m.id === activeJobMatchId).jobTitle || "Target Role"} (${allMatches.find(m => m.id === activeJobMatchId).overallScore}%)` 
+                    : "Global Overview (All Matches)")
+                : "Global Overview (All Matches)"}
+            </span>
+            {isDropdownOpen ? <ChevronUp className="h-4 w-4 shrink-0 text-slate-400" /> : <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />}
+          </div>
+          
+          {isDropdownOpen && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+              <div 
+                className={`px-3 py-2 text-sm cursor-pointer hover:bg-indigo-50 hover:text-indigo-700 ${!activeJobMatchId ? 'bg-indigo-50/50 text-indigo-700 font-semibold' : 'text-slate-700'}`}
+                onClick={() => {
+                  setActiveJobMatchId('');
+                  setIsDropdownOpen(false);
+                }}
+              >
+                Global Overview (All Matches)
+              </div>
+              {allMatches.map(match => {
+                const companyName = match.company || match.companyName || "Target Company";
+                const isSelected = activeJobMatchId === match.id;
+                return (
+                  <div 
+                    key={match.id} 
+                    className={`group flex items-center justify-between px-3 py-2 text-sm cursor-pointer hover:bg-indigo-50 border-t border-slate-50 transition-colors ${isSelected ? 'bg-indigo-50/70 text-indigo-700 font-semibold' : 'text-slate-700'}`}
+                    onClick={() => {
+                      setActiveJobMatchId(match.id);
+                      setIsDropdownOpen(false);
+                    }}
+                  >
+                    <span className="truncate pr-2" title={`${match.jobTitle || "Target Role"} at ${companyName}`}>
+                      {match.jobTitle || "Target Role"} at {companyName} ({match.overallScore}%)
+                    </span>
+                    <button 
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleDeleteMatch(e, match.id);
+                      }}
+                      className="p-1.5 rounded-md hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition-colors shrink-0 z-10"
+                      title="Delete Job Match from Database"
+                    >
+                      <Trash2 className="h-4 w-4 pointer-events-none" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Top Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard 
+          icon={<Target className="h-6 w-6 text-indigo-600" />}
+          title="Career Readiness"
+          value={`${careerReadiness}%`}
+          bgClass="bg-indigo-100"
+          onClick={() => navigate('/dashboard/progress')}
+        />
+        <StatCard 
+          icon={<Briefcase className="h-6 w-6 text-emerald-600" />}
+          title="Jobs Analyzed"
+          value={jobsAnalyzed}
+          bgClass="bg-emerald-100"
+          onClick={() => navigate('/dashboard/history')}
+        />
+        <StatCard 
+          icon={<CheckCircle2 className="h-6 w-6 text-blue-600" />}
+          title="Verified Skill Score"
+          value={`${skillsVerified}%`}
+          bgClass="bg-blue-100"
+          onClick={() => navigate('/dashboard/skills')}
+        />
+        <StatCard 
+          icon={<Award className="h-6 w-6 text-amber-600" />}
+          title="Active Roadmaps"
+          value={roadmapsStarted}
+          bgClass="bg-amber-100"
+          onClick={() => navigate('/dashboard/roadmap')}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        {/* Readiness Breakdown */}
+        <Card className="lg:col-span-2 border-slate-200 shadow-sm">
+          <CardHeader className="bg-slate-50 border-b border-slate-100">
+            <CardTitle className="text-lg flex items-center">
+              <Activity className="mr-2 h-5 w-5 text-indigo-500" />
+              Readiness Breakdown
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center h-full">
+              <div className="flex flex-col items-center justify-center">
+                <CircularProgress 
+                  value={careerReadiness} 
+                  size={160} 
+                  strokeWidth={12} 
+                  label="Overall Score"
+                  color="#4f46e5" 
+                />
+                <p className="text-sm text-slate-500 mt-4 text-center max-w-xs">
+                  Your overall score is aggregated from your resume, job matches, and assessments.
+                </p>
+              </div>
+              <div className="space-y-5">
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm font-medium text-slate-700">Resume Quality</span>
+                    <span className="text-sm font-bold text-slate-900">{realStats?.resumeQualityScore || 0}%</span>
+                  </div>
+                  <ProgressBar progress={realStats?.resumeQualityScore || 0} color="bg-indigo-500" />
+                </div>
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm font-medium text-slate-700">Job Compatibility</span>
+                    <span className="text-sm font-bold text-slate-900">{realStats?.jobCompatibilityScore || 0}%</span>
+                  </div>
+                  <ProgressBar progress={realStats?.jobCompatibilityScore || 0} color="bg-emerald-500" />
+                </div>
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm font-medium text-slate-700">Assessment Score</span>
+                    <span className="text-sm font-bold text-slate-900">{realStats?.assessmentScore || 0}%</span>
+                  </div>
+                  <ProgressBar progress={realStats?.assessmentScore || 0} color="bg-amber-500" />
+                </div>
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm font-medium text-slate-700">Roadmap Progress</span>
+                    <span className="text-sm font-bold text-slate-900">{realStats?.roadmapCompletion || 0}%</span>
+                  </div>
+                  <ProgressBar progress={realStats?.roadmapCompletion || 0} color="bg-blue-500" />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Job Matches */}
+        <Card className="border-slate-200 shadow-sm flex flex-col">
+          <CardHeader className="bg-slate-50 border-b border-slate-100 flex-row justify-between items-center py-4">
+            <CardTitle className="text-lg">Recent Job Matches</CardTitle>
+            <Button variant="ghost" size="sm" className="text-indigo-600 text-xs" onClick={() => navigate('/dashboard/jobs')}>
+              Analyze New
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0 flex-1 overflow-auto">
+            {recentMatches.length === 0 ? (
+               <div className="p-8 text-center text-slate-500 text-sm">
+                  No jobs analyzed yet. Go to Job Analyzer to get started!
+               </div>
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {recentMatches.map((match, idx) => (
+                  <li key={match.id || idx} className="p-4 hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => navigate('/dashboard/jobs')}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-3">
+                        <div className="bg-indigo-100 p-2 rounded-lg shrink-0 mt-1">
+                          <Briefcase className="h-4 w-4 text-indigo-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900 line-clamp-1">{match.jobTitle || 'Unknown Role'}</p>
+                          <p className="text-xs text-slate-500">{match.company || 'Company'}</p>
+                          <div className="mt-2 flex items-center space-x-2">
+                            <Badge variant={match.overallScore >= 80 ? 'success' : match.overallScore >= 60 ? 'warning' : 'danger'}>
+                              {match.overallScore}% Match
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="h-8 w-8 p-0 shrink-0 rounded-full hover:bg-indigo-100 hover:text-indigo-600"
+                        onClick={() => navigate('/dashboard/skill-gap', { state: { matchId: match.id } })}
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Active Roadmaps */}
+      <div className="mt-6">
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader className="bg-slate-50 border-b border-slate-100 flex-row justify-between items-center">
+            <CardTitle className="text-lg">Active Learning Roadmaps</CardTitle>
+            {activeRoadmaps.length > 0 && (
+              <Button variant="ghost" size="sm" className="text-indigo-600" onClick={() => navigate('/dashboard/roadmap')}>
+                View All
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent className="p-6">
+             {activeRoadmaps.length === 0 ? (
+               <div className="py-8 text-center border-2 border-dashed border-slate-200 rounded-lg">
+                  <Compass className="h-8 w-8 text-slate-300 mx-auto mb-3" />
+                  <p className="text-slate-500 font-medium mb-1">No active roadmaps</p>
+                  <p className="text-slate-400 text-sm mb-4">Generate a roadmap from your skill gaps to start learning.</p>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/skill-gap')}>
+                    Go to Skill Gaps
+                  </Button>
+               </div>
+             ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {activeRoadmaps.map((roadmap, idx) => {
+                    const completedWeeks = roadmap.weeks?.filter(w => w.completed).length || 0;
+                    const totalWeeks = roadmap.weeks?.length || 1;
+                    const progress = Math.round((completedWeeks / totalWeeks) * 100);
+                    return (
+                      <div key={roadmap.id || idx} className="bg-white border border-slate-200 rounded-xl p-5 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer" onClick={() => navigate('/dashboard/roadmap', { state: { roadmapId: roadmap.id } })}>
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="bg-emerald-100 p-2 rounded-lg text-emerald-600">
+                             <Compass className="h-5 w-5" />
+                          </div>
+                          <Badge variant="outline" className="text-xs bg-slate-50">
+                            {totalWeeks} Weeks
+                          </Badge>
+                        </div>
+                        <h3 className="font-bold text-slate-900 mb-1">{roadmap.targetRole || 'Skill Development'}</h3>
+                        <p className="text-xs text-slate-500 mb-4 line-clamp-2">Targeting key gap areas based on latest job match.</p>
+                        
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs font-medium">
+                            <span className="text-slate-600">Overall Progress</span>
+                            <span className="text-emerald-600">
+                               {progress}%
+                            </span>
+                          </div>
+                          <ProgressBar 
+                             progress={progress} 
+                             color="bg-emerald-500" 
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+             )}
+          </CardContent>
+        </Card>
+      </div>
+
+    </div>
+  );
+};
+
+export default Dashboard;
