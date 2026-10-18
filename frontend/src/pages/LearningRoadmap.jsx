@@ -700,6 +700,7 @@ const LearningRoadmap = () => {
           const daysPerModule = Math.max(1, Math.round(activeSprintDays / totalWeeks));
           const startDay = (idx * daysPerModule) + 1;
           const endDay = idx === totalWeeks - 1 ? activeSprintDays : Math.min(activeSprintDays, (idx + 1) * daysPerModule);
+          const moduleNum = (week.weekNumber && week.weekNumber > 0 && roadmap.weeks.filter(w => w.weekNumber === week.weekNumber).length === 1) ? week.weekNumber : (idx + 1);
 
           return (
             <div
@@ -722,7 +723,7 @@ const LearningRoadmap = () => {
                   cfg.dot
                 )}>
                   <span className={cfg.numberClass}>
-                    {isCompleted ? <CheckCircle2 className="h-6 w-6" /> : week.weekNumber}
+                    {isCompleted ? <CheckCircle2 className="h-6 w-6" /> : moduleNum}
                   </span>
                 </div>
 
@@ -732,7 +733,7 @@ const LearningRoadmap = () => {
                       Days {startDay}–{endDay} Target
                     </span>
                     <h3 className="text-base font-bold text-slate-900">
-                      Module {week.weekNumber}: {week.skill}
+                      Module {moduleNum}: {week.skill}
                     </h3>
                     <span className={cn('text-[10px] font-bold uppercase px-2 py-0.5 rounded-full tracking-wider', cfg.badge)}>
                       {cfg.badgeLabel}
@@ -773,31 +774,45 @@ const LearningRoadmap = () => {
                 <div className="border-t border-slate-200/80 p-5 print:block bg-white/60">
                   <div className="grid md:grid-cols-3 gap-5">
                     {/* Topics and Interview Focus */}
-                    <div>
+                    <div className="min-w-0">
                       <div className="week-section-label text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                         <BookOpen className="h-3.5 w-3.5 text-indigo-600 print:hidden" /> Key Placement Topics & Interview Concepts
                       </div>
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-2.5">
                         {week.topics && week.topics.length > 0 ? (
                           week.topics.map((topic, i) => {
                             const isInterview = /interview|question|tricky|frequently|scenario|core|pattern|edge/i.test(topic);
+                            const parts = typeof topic === 'string' ? topic.split(/\s*-\s*Interview:\s*/i) : [topic];
+                            const mainText = parts[0];
+                            const interviewQuestion = parts.length > 1 ? parts.slice(1).join(' - Interview: ') : null;
+
                             return (
                               <div 
                                 key={i} 
                                 className={cn(
-                                  "text-xs font-medium p-2 rounded-lg border shadow-xs leading-relaxed flex items-start gap-2",
+                                  "text-xs p-3 rounded-xl border shadow-xs transition-all w-full min-w-0 overflow-hidden flex flex-col gap-2",
                                   isInterview
-                                    ? "bg-violet-50/80 border-violet-200 text-violet-950"
+                                    ? "bg-violet-50/90 border-violet-200/90 text-violet-950"
                                     : "bg-white border-slate-200 text-slate-700"
                                 )}
                               >
-                                <span className={cn(
-                                  "text-[10px] font-extrabold px-1.5 py-0.5 rounded shrink-0 uppercase tracking-wider mt-0.5",
-                                  isInterview ? "bg-violet-600 text-white" : "bg-slate-200 text-slate-600"
-                                )}>
-                                  {isInterview ? '🎯 Interview' : `T${i + 1}`}
-                                </span>
-                                <span>{topic}</span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className={cn(
+                                    "text-[10px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider shrink-0 inline-flex items-center gap-1 shadow-xs",
+                                    isInterview ? "bg-violet-600 text-white" : "bg-slate-100 text-slate-600 border border-slate-200"
+                                  )}>
+                                    {isInterview ? '🎯 Interview Concept' : `Topic ${i + 1}`}
+                                  </span>
+                                </div>
+                                <div className="font-medium text-xs leading-relaxed text-slate-800 break-words [overflow-wrap:anywhere] [word-break:break-word]">
+                                  {mainText}
+                                </div>
+                                {interviewQuestion && (
+                                  <div className="p-2.5 rounded-lg bg-violet-100/70 border border-violet-200/80 text-[11px] text-violet-950 font-normal leading-relaxed break-words [overflow-wrap:anywhere] [word-break:break-word]">
+                                    <span className="font-bold text-violet-700 block mb-0.5">Interview Question:</span>
+                                    {interviewQuestion.replace(/^['"]|['"]$/g, '')}
+                                  </div>
+                                )}
                               </div>
                             );
                           })
@@ -808,30 +823,30 @@ const LearningRoadmap = () => {
                     </div>
 
                     {/* Practical Coding Task / Drill */}
-                    <div>
+                    <div className="min-w-0">
                       <div className="week-section-label text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                         <Terminal className="h-3.5 w-3.5 text-emerald-600 print:hidden" /> Hands-On Placement Coding Drill
                       </div>
-                      <div className="task-box bg-slate-900 text-emerald-400 rounded-xl p-4 text-xs font-mono leading-relaxed shadow-sm border border-slate-800">
+                      <div className="task-box bg-slate-900 text-emerald-400 rounded-xl p-4 text-xs font-mono leading-relaxed shadow-sm border border-slate-800 break-words [overflow-wrap:anywhere] [word-break:break-word]">
                         <div className="text-[10px] text-slate-400 mb-1 flex items-center gap-1 font-sans uppercase font-bold">
                           <Code className="h-3 w-3 text-emerald-400" /> Practical Task Prompt:
                         </div>
-                        <p className="text-slate-100 font-sans text-xs leading-relaxed">
+                        <p className="text-slate-100 font-sans text-xs leading-relaxed break-words [overflow-wrap:anywhere] [word-break:break-word]">
                           {week.practicalTask || 'Hands-on coding exercise tailored for campus drive technical rounds.'}
                         </p>
                       </div>
                     </div>
 
                     {/* Capstone Project Highlight */}
-                    <div>
+                    <div className="min-w-0">
                       <div className="week-section-label text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                         <Trophy className="h-3.5 w-3.5 text-amber-500 print:hidden" /> Capstone Project Defense
                       </div>
-                      <div className="project-box bg-gradient-to-br from-indigo-50 to-violet-50 rounded-xl border border-indigo-200 p-4 text-xs text-indigo-950 leading-relaxed shadow-sm">
+                      <div className="project-box bg-gradient-to-br from-indigo-50 to-violet-50 rounded-xl border border-indigo-200 p-4 text-xs text-indigo-950 leading-relaxed shadow-sm break-words [overflow-wrap:anywhere] [word-break:break-word]">
                         <div className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
                           <Sparkles className="h-3 w-3" /> Resume Project Defense:
                         </div>
-                        <p className="font-medium text-slate-800">
+                        <p className="font-medium text-slate-800 break-words [overflow-wrap:anywhere] [word-break:break-word]">
                           {week.project || 'Resume project showcase to discuss with the technical interviewer.'}
                         </p>
                         <div className="mt-3 pt-2.5 border-t border-indigo-100 flex items-center justify-between text-[11px] text-indigo-700 font-semibold">
