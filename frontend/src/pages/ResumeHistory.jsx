@@ -306,17 +306,29 @@ const ResumeHistory = () => {
                       </div>
                     </div>
 
-                    <div className="flex justify-between gap-2 pt-1">
-                      <Button variant="outline" size="sm" className="flex-1" leftIcon={<Eye className="h-4 w-4" />} onClick={() => navigate('/dashboard/resume', { state: { resumeId: item.id } })}>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-9 px-3 text-xs sm:text-sm font-semibold shrink-0" 
+                        leftIcon={<Eye className="h-4 w-4 text-slate-500" />} 
+                        onClick={() => navigate('/dashboard/resume', { state: { resumeId: item.id } })}
+                      >
                         View
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1" leftIcon={<Briefcase className="h-4 w-4 text-indigo-600" />} onClick={() => navigate('/dashboard/jobs', { state: { resumeId: item.id } })}>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-9 px-3 flex-1 text-xs sm:text-sm font-semibold justify-center min-w-0" 
+                        leftIcon={<Briefcase className="h-4 w-4 text-indigo-600 shrink-0" />} 
+                        onClick={() => navigate('/dashboard/jobs', { state: { resumeId: item.id } })}
+                      >
                         Analyze Job
                       </Button>
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="px-3 text-rose-600 hover:bg-rose-50 border-slate-200" 
+                        className="h-9 w-9 p-0 shrink-0 text-rose-600 hover:bg-rose-50 hover:border-rose-200 border-slate-200 flex items-center justify-center" 
                         title="Delete Resume"
                         onClick={() => setResumeToDelete(item)}
                       >
