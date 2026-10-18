@@ -1,12 +1,24 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
-import { BrainCircuit, Menu, X, ExternalLink, Globe, ArrowUp } from 'lucide-react';
+import { BrainCircuit, Menu, X, ExternalLink, Globe, ArrowUp, Mail, MapPin, Sparkles, Clock, CheckCircle2 } from 'lucide-react';
 import Button from '../components/Button';
 
 const MainLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [subscribed, setSubscribed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleNewsletterSubmit = (e) => {
+    e.preventDefault();
+    if (!newsletterEmail) return;
+    setSubscribed(true);
+    setNewsletterEmail('');
+    setTimeout(() => {
+      setSubscribed(false);
+    }, 6000);
+  };
 
   const navigateToSection = (sectionId) => {
     setIsMobileMenuOpen(false);
@@ -140,12 +152,50 @@ const MainLayout = () => {
       {/* Footer */}
       <footer className="bg-slate-900 border-t border-slate-800 pt-16 pb-8 text-slate-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+          
+          {/* Newsletter / Stay Ahead Banner */}
+          <div className="mb-14 p-6 sm:p-8 rounded-2xl bg-gradient-to-r from-slate-800/90 via-slate-800 to-indigo-950/60 border border-slate-700/60 shadow-xl flex flex-col lg:flex-row items-center justify-between gap-6">
+            <div className="max-w-xl text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-semibold mb-3 border border-indigo-500/20">
+                <Sparkles className="h-3.5 w-3.5" /> Stay Ahead in Tech
+              </div>
+              <h3 className="text-xl font-bold text-white tracking-tight">
+                Get Weekly AI Career & Hiring Insights
+              </h3>
+              <p className="text-slate-400 text-sm mt-1">
+                Curated resume tips, in-demand skill breakdowns, and interview questions delivered straight to your inbox.
+              </p>
+            </div>
+
+            <form onSubmit={handleNewsletterSubmit} className="w-full lg:w-auto flex flex-col sm:flex-row gap-3">
+              <div className="relative min-w-[280px]">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input 
+                  type="email"
+                  required
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  placeholder="Enter your email address"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-inner"
+                />
+              </div>
+              <Button 
+                type="submit"
+                variant="primary"
+                className="whitespace-nowrap px-5 py-2.5 shadow-md hover:shadow-indigo-500/25 cursor-pointer"
+              >
+                {subscribed ? 'Subscribed! 🎉' : 'Subscribe'}
+              </Button>
+            </form>
+          </div>
+
+          {/* 5-Column Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 mb-14">
             
             {/* Column 1: Brand & Bio */}
-            <div className="col-span-1 md:col-span-1">
+            <div className="sm:col-span-2 lg:col-span-1">
               <div 
-                className="flex items-center gap-2 mb-6 cursor-pointer group inline-flex"
+                className="flex items-center gap-2 mb-4 cursor-pointer group inline-flex"
                 onClick={() => {
                   if (location.pathname !== '/') navigate('/');
                   scrollToTop();
@@ -159,11 +209,11 @@ const MainLayout = () => {
                 </span>
               </div>
               <p className="text-slate-400 text-sm leading-relaxed mb-6">
-                Analyze your resume, discover skill gaps, match with job opportunities, and build a personalized path to become career-ready.
+                Intelligent AI career intelligence. Analyze resumes, discover critical skill gaps, match with real jobs, and master technical interviews.
               </p>
               
               {/* Social Icons */}
-              <div className="flex space-x-3">
+              <div className="flex space-x-3 mb-6">
                 <button 
                   onClick={() => {
                     if (location.pathname !== '/') navigate('/');
@@ -208,50 +258,53 @@ const MainLayout = () => {
                   </svg>
                 </a>
               </div>
+
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs border border-emerald-500/20 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                100% Privacy Protected
+              </div>
             </div>
             
-            {/* Column 2: Product */}
+            {/* Column 2: Platform Solutions */}
             <div>
-              <h3 className="font-semibold text-white mb-6 uppercase tracking-wider text-sm">Product</h3>
+              <h3 className="font-semibold text-white mb-5 uppercase tracking-wider text-xs">Platform</h3>
               <ul className="space-y-3 text-sm">
                 <li>
-                  <button 
-                    onClick={() => navigateToSection('about')} 
-                    className="hover:text-indigo-400 transition-colors text-left"
-                  >
-                    About
-                  </button>
+                  <Link to="/dashboard/resume" className="hover:text-indigo-400 transition-colors">
+                    Resume Analyzer
+                  </Link>
                 </li>
                 <li>
-                  <button 
-                    onClick={() => navigateToSection('how-it-works')} 
-                    className="hover:text-indigo-400 transition-colors text-left"
-                  >
-                    How It Works
-                  </button>
+                  <Link to="/dashboard/jobs" className="hover:text-indigo-400 transition-colors">
+                    Job Matcher
+                  </Link>
                 </li>
                 <li>
-                  <button 
-                    onClick={() => navigateToSection('features')} 
-                    className="hover:text-indigo-400 transition-colors text-left"
-                  >
-                    Features
-                  </button>
+                  <Link to="/dashboard/skills" className="hover:text-indigo-400 transition-colors">
+                    Skill Gap Analysis
+                  </Link>
                 </li>
                 <li>
-                  <button 
-                    onClick={() => navigateToSection('ai-capabilities')} 
-                    className="hover:text-indigo-400 transition-colors text-left"
-                  >
-                    AI Capabilities
-                  </button>
+                  <Link to="/dashboard/roadmap" className="hover:text-indigo-400 transition-colors">
+                    Learning Roadmap
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/dashboard/interview" className="hover:text-indigo-400 transition-colors">
+                    AI Mock Interview
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/dashboard/progress" className="hover:text-indigo-400 transition-colors">
+                    Progress Tracker
+                  </Link>
                 </li>
               </ul>
             </div>
 
             {/* Column 3: Resources */}
             <div>
-              <h3 className="font-semibold text-white mb-6 uppercase tracking-wider text-sm">Resources</h3>
+              <h3 className="font-semibold text-white mb-5 uppercase tracking-wider text-xs">Resources</h3>
               <ul className="space-y-3 text-sm">
                 <li>
                   <Link 
@@ -272,12 +325,28 @@ const MainLayout = () => {
                     Help Center & FAQ
                   </Link>
                 </li>
+                <li>
+                  <button 
+                    onClick={() => navigateToSection('how-it-works')} 
+                    className="hover:text-indigo-400 transition-colors text-left"
+                  >
+                    How It Works
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => navigateToSection('features')} 
+                    className="hover:text-indigo-400 transition-colors text-left"
+                  >
+                    Platform Features
+                  </button>
+                </li>
               </ul>
             </div>
 
-            {/* Column 4: Legal */}
+            {/* Column 4: Legal & Policy */}
             <div>
-              <h3 className="font-semibold text-white mb-6 uppercase tracking-wider text-sm">Legal</h3>
+              <h3 className="font-semibold text-white mb-5 uppercase tracking-wider text-xs">Legal & Trust</h3>
               <ul className="space-y-3 text-sm">
                 <li>
                   <Link to="/privacy" className="hover:text-indigo-400 transition-colors">
@@ -294,30 +363,87 @@ const MainLayout = () => {
                     Cookie Policy
                   </Link>
                 </li>
+                <li>
+                  <Link to="/privacy" className="hover:text-indigo-400 transition-colors">
+                    Data Encryption & Security
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/terms" className="hover:text-indigo-400 transition-colors">
+                    AI Transparency & Ethics
+                  </Link>
+                </li>
               </ul>
             </div>
+
+            {/* Column 5: Contact & Support */}
+            <div>
+              <h3 className="font-semibold text-white mb-5 uppercase tracking-wider text-xs">Contact & Office</h3>
+              <div className="space-y-4 text-sm">
+                <div>
+                  <span className="text-xs text-slate-400 block mb-1">Direct Support</span>
+                  <a 
+                    href="mailto:support@skillmatchai.com" 
+                    className="text-white hover:text-indigo-400 transition-colors inline-flex items-center gap-2"
+                  >
+                    <Mail className="h-4 w-4 text-indigo-400" />
+                    <span>support@skillmatchai.com</span>
+                  </a>
+                </div>
+
+                <div>
+                  <span className="text-xs text-slate-400 block mb-1">Office Location</span>
+                  <div className="text-slate-300 flex items-start gap-2">
+                    <MapPin className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
+                    <span>Chennai, Tamil Nadu, India</span>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-xs text-slate-400 block mb-1">Business Hours</span>
+                  <div className="text-slate-300 flex items-start gap-2">
+                    <Clock className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+                    <span>Mon – Fri: 9am – 6pm IST</span>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <div className="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700/80 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span className="text-xs text-slate-300 font-medium">24/7 AI Career Support</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
           
           {/* Bottom Bar */}
-          <div className="border-t border-slate-800 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-500">
-            <div className="flex items-center gap-4">
+          <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
               <p>
                 &copy; {new Date().getFullYear()} SkillMatch AI. All rights reserved.
               </p>
-              <span className="hidden sm:inline">•</span>
+              <span className="hidden sm:inline text-slate-700">•</span>
+              <p className="text-slate-400">
+                Engineered with precision for ambitious career builders.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5 text-slate-400">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                 <span>All systems operational</span>
               </div>
-            </div>
 
-            {/* Back to top button */}
-            <button 
-              onClick={scrollToTop}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition-all text-xs font-medium cursor-pointer"
-            >
-              <ArrowUp className="h-3.5 w-3.5" /> Back to Top
-            </button>
+              {/* Back to top button */}
+              <button 
+                onClick={scrollToTop}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition-all text-xs font-medium cursor-pointer"
+              >
+                <ArrowUp className="h-3.5 w-3.5" /> Back to Top
+              </button>
+            </div>
           </div>
         </div>
       </footer>
