@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   User, Bell, Shield, Download, Trash2, Smartphone, Monitor, 
-  Save, AlertTriangle, CheckCircle2, Globe, Camera 
+  Save, AlertTriangle, CheckCircle2, Globe, Camera, Eye, EyeOff, Lock
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
 import Input from '../components/Input';
@@ -49,6 +49,7 @@ const Settings = () => {
     new: '',
     confirm: ''
   });
+  const [showPasswords, setShowPasswords] = useState(false);
 
   // Modals State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -399,26 +400,56 @@ const Settings = () => {
           
           <div>
             <h3 className="text-lg font-semibold text-slate-900 mb-4">Change Password</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl" autoComplete="off">
               <div className="md:col-span-2">
                 <Input 
                   label="Current Password" 
-                  type="password" 
+                  name="settings_curr_key"
+                  type={showPasswords ? "text" : "password"} 
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                  data-form-type="other"
+                  leftIcon={<Lock className="h-4 w-4" />}
+                  rightIcon={
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswords(!showPasswords)}
+                      className="text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                    >
+                      {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  }
                   value={passwords.current}
                   onChange={(e) => setPasswords({...passwords, current: e.target.value})}
+                  placeholder="Enter current password"
                 />
               </div>
               <Input 
                 label="New Password" 
-                type="password" 
+                name="settings_new_key"
+                type={showPasswords ? "text" : "password"} 
+                autoComplete="off"
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-form-type="other"
+                leftIcon={<Lock className="h-4 w-4" />}
                 value={passwords.new}
                 onChange={(e) => setPasswords({...passwords, new: e.target.value})}
+                placeholder="Enter new password"
               />
               <Input 
                 label="Confirm New Password" 
-                type="password" 
+                name="settings_conf_key"
+                type={showPasswords ? "text" : "password"} 
+                autoComplete="off"
+                data-lpignore="true"
+                data-1p-ignore="true"
+                data-form-type="other"
+                leftIcon={<Lock className="h-4 w-4" />}
                 value={passwords.confirm}
                 onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
+                placeholder="Confirm new password"
               />
             </div>
             <div className="mt-4">

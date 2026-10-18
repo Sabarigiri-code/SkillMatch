@@ -289,11 +289,17 @@ const Login = () => {
                 <label className="block text-xs font-bold text-slate-700 mb-1">New Password</label>
                 <div className="relative">
                   <input
-                    type={showResetPassword ? 'text' : 'password'}
+                    type="text"
+                    name="modal_new_key"
+                    style={{ WebkitTextSecurity: showResetPassword ? 'none' : 'disc' }}
                     placeholder="Enter new password (min 6 chars)"
                     value={resetPasswordVal}
                     onChange={(e) => setResetPasswordVal(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none pr-10"
+                    autoComplete="off"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-form-type="other"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none pr-10 secure-text-disc"
                   />
                   <button
                     type="button"
@@ -308,11 +314,17 @@ const Login = () => {
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Confirm New Password</label>
                 <input
-                  type={showResetPassword ? 'text' : 'password'}
+                  type="text"
+                  name="modal_conf_key"
+                  style={{ WebkitTextSecurity: showResetPassword ? 'none' : 'disc' }}
                   placeholder="Re-enter new password"
                   value={confirmResetVal}
                   onChange={(e) => setConfirmResetVal(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                  data-form-type="other"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none secure-text-disc"
                 />
               </div>
             </div>
