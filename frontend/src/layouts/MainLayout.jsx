@@ -399,12 +399,6 @@ const MainLayout = () => {
                   </div>
                 </div>
 
-                <div className="pt-2">
-                  <div className="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700/80 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span className="text-xs text-slate-300 font-medium">24/7 AI Career Support</span>
-                  </div>
-                </div>
               </div>
             </div>
 
