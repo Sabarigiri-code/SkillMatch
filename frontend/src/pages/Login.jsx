@@ -15,6 +15,8 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
+  const [isEmailFocused, setIsEmailFocused] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   // Reset Password Modal states
   const [showResetModal, setShowResetModal] = useState(false);
@@ -133,12 +135,14 @@ const Login = () => {
       </CardHeader>
       <CardContent>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
           <Input
             label="Email"
-            name="email"
+            name="user_login_email"
             type="email"
-            autoComplete="email"
+            autoComplete="off"
+            readOnly={!isEmailFocused}
+            onFocus={() => setIsEmailFocused(true)}
             placeholder="Enter your email"
             leftIcon={<Mail className="h-4 w-4" />}
             value={formData.email}
@@ -149,9 +153,11 @@ const Login = () => {
           <div className="space-y-1.5">
             <Input
               label="Password"
-              name="password"
+              name="user_login_password"
               type={showPassword ? 'text' : 'password'}
-              autoComplete="current-password"
+              autoComplete="new-password"
+              readOnly={!isPasswordFocused}
+              onFocus={() => setIsPasswordFocused(true)}
               placeholder="Enter your password"
               leftIcon={<Lock className="h-4 w-4" />}
               rightIcon={
