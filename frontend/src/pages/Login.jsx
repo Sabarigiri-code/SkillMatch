@@ -15,8 +15,6 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
-  const [isEmailFocused, setIsEmailFocused] = useState(false);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
   // Reset Password Modal states
   const [showResetModal, setShowResetModal] = useState(false);
@@ -135,14 +133,16 @@ const Login = () => {
       </CardHeader>
       <CardContent>
         
-        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off" data-lpignore="true">
           <Input
             label="Email"
-            name="user_login_email"
-            type="email"
+            name="account_user_id"
+            type="text"
+            inputMode="email"
             autoComplete="off"
-            readOnly={!isEmailFocused}
-            onFocus={() => setIsEmailFocused(true)}
+            data-lpignore="true"
+            data-1p-ignore="true"
+            data-form-type="other"
             placeholder="Enter your email"
             leftIcon={<Mail className="h-4 w-4" />}
             value={formData.email}
@@ -153,11 +153,14 @@ const Login = () => {
           <div className="space-y-1.5">
             <Input
               label="Password"
-              name="user_login_password"
-              type={showPassword ? 'text' : 'password'}
-              autoComplete="new-password"
-              readOnly={!isPasswordFocused}
-              onFocus={() => setIsPasswordFocused(true)}
+              name="account_security_key"
+              type="text"
+              className={showPassword ? "secure-text-none" : "secure-text-disc"}
+              style={{ WebkitTextSecurity: showPassword ? 'none' : 'disc' }}
+              autoComplete="off"
+              data-lpignore="true"
+              data-1p-ignore="true"
+              data-form-type="other"
               placeholder="Enter your password"
               leftIcon={<Lock className="h-4 w-4" />}
               rightIcon={

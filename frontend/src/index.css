@@ -39,6 +39,17 @@ input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s;
 }
 
+/* Secure input masking to avoid browser password autofill popup */
+.secure-text-disc {
+  -webkit-text-security: disc !important;
+  text-security: disc !important;
+}
+
+.secure-text-none {
+  -webkit-text-security: none !important;
+  text-security: none !important;
+}
+
 /* =========================================================
    GLOBAL DARK MODE OVERRIDES
    Because components are hardcoded with light-mode classes 
