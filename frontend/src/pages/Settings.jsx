@@ -49,7 +49,11 @@ const Settings = () => {
     new: '',
     confirm: ''
   });
-  const [showPasswords, setShowPasswords] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordStatus, setPasswordStatus] = useState(null);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   // Modals State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -144,27 +148,42 @@ const Settings = () => {
     }
   };
 
-  const handlePasswordChange = async () => {
-    if (!passwords.current || !passwords.new || !passwords.confirm) {
-      alert("All fields are required.");
+  const handlePasswordChange = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setPasswordStatus(null);
+
+    if (!passwords.current) {
+      setPasswordStatus({ type: 'error', message: 'Please enter your current password.' });
+      return;
+    }
+    if (!passwords.new) {
+      setPasswordStatus({ type: 'error', message: 'Please enter a new password.' });
+      return;
+    }
+    if (passwords.new.length < 6) {
+      setPasswordStatus({ type: 'error', message: 'New password must be at least 6 characters long.' });
       return;
     }
     if (passwords.new !== passwords.confirm) {
-      alert("New passwords do not match.");
+      setPasswordStatus({ type: 'error', message: 'New password and confirmation password do not match.' });
       return;
     }
 
+    setIsUpdatingPassword(true);
     try {
       await api.put('/users/change-password', { 
         currentPassword: passwords.current, 
         newPassword: passwords.new 
       });
       setPasswords({ current: '', new: '', confirm: '' });
+      setPasswordStatus({ type: 'success', message: 'Password updated successfully!' });
       setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
+      setTimeout(() => setShowToast(false), 4000);
     } catch (err) {
-      const errorMsg = err.response?.data?.error || "Failed to update password.";
-      alert(errorMsg);
+      const errorMsg = err.response?.data?.error || "Failed to update password. Please check your current password.";
+      setPasswordStatus({ type: 'error', message: errorMsg });
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -400,12 +419,28 @@ const Settings = () => {
           
           <div>
             <h3 className="text-lg font-semibold text-slate-900 mb-4">Change Password</h3>
+            
+            {passwordStatus && (
+              <div className={`mb-5 p-3.5 rounded-lg text-sm flex items-center gap-2.5 max-w-2xl ${
+                passwordStatus.type === 'error' 
+                  ? 'bg-rose-50 text-rose-700 border border-rose-200' 
+                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+              }`}>
+                {passwordStatus.type === 'error' ? (
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-rose-500" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                )}
+                <span>{passwordStatus.message}</span>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl" autoComplete="off">
               <div className="md:col-span-2">
                 <Input 
                   label="Current Password" 
                   name="settings_curr_key"
-                  type={showPasswords ? "text" : "password"} 
+                  type={showCurrentPassword ? "text" : "password"} 
                   autoComplete="off"
                   data-lpignore="true"
                   data-1p-ignore="true"
@@ -414,49 +449,90 @@ const Settings = () => {
                   rightIcon={
                     <button
                       type="button"
-                      onClick={() => setShowPasswords(!showPasswords)}
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                       className="text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                      title={showCurrentPassword ? "Hide password" : "Show password"}
                     >
-                      {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   }
                   value={passwords.current}
-                  onChange={(e) => setPasswords({...passwords, current: e.target.value})}
+                  onChange={(e) => {
+                    setPasswords({...passwords, current: e.target.value});
+                    if (passwordStatus) setPasswordStatus(null);
+                  }}
                   placeholder="Enter current password"
                 />
               </div>
               <Input 
                 label="New Password" 
                 name="settings_new_key"
-                type={showPasswords ? "text" : "password"} 
+                type={showNewPassword ? "text" : "password"} 
                 autoComplete="off"
                 data-lpignore="true"
                 data-1p-ignore="true"
                 data-form-type="other"
                 leftIcon={<Lock className="h-4 w-4" />}
+                rightIcon={
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                    title={showNewPassword ? "Hide password" : "Show password"}
+                  >
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                }
                 value={passwords.new}
-                onChange={(e) => setPasswords({...passwords, new: e.target.value})}
-                placeholder="Enter new password"
+                onChange={(e) => {
+                  setPasswords({...passwords, new: e.target.value});
+                  if (passwordStatus) setPasswordStatus(null);
+                }}
+                error={passwords.new && passwords.new.length < 6 ? "Must be at least 6 characters" : undefined}
+                placeholder="Enter new password (min. 6 characters)"
               />
               <Input 
                 label="Confirm New Password" 
                 name="settings_conf_key"
-                type={showPasswords ? "text" : "password"} 
+                type={showConfirmPassword ? "text" : "password"} 
                 autoComplete="off"
                 data-lpignore="true"
                 data-1p-ignore="true"
                 data-form-type="other"
                 leftIcon={<Lock className="h-4 w-4" />}
+                rightIcon={
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                    title={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                }
                 value={passwords.confirm}
-                onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
+                onChange={(e) => {
+                  setPasswords({...passwords, confirm: e.target.value});
+                  if (passwordStatus) setPasswordStatus(null);
+                }}
+                error={
+                  passwords.confirm && passwords.new !== passwords.confirm 
+                    ? "Passwords do not match" 
+                    : undefined
+                }
+                helperText={
+                  passwords.confirm && passwords.new === passwords.confirm && passwords.new.length >= 6
+                    ? "✓ Passwords match"
+                    : undefined
+                }
                 placeholder="Confirm new password"
               />
             </div>
-            <div className="mt-4">
+            <div className="mt-5">
               <Button 
-                variant="outline" 
+                variant="primary" 
                 onClick={handlePasswordChange}
-                disabled={!passwords.current || !passwords.new || passwords.new !== passwords.confirm}
+                isLoading={isUpdatingPassword}
               >
                 Update Password
               </Button>

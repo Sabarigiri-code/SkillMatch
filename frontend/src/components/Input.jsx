@@ -46,7 +46,7 @@ const Input = React.forwardRef(({ className, type = "text", label, error, helper
         )}
       </div>
       {(error || helperText) && (
-        <p className={cn("text-xs", error ? "text-rose-500" : "text-slate-500")}>
+        <p className={cn("text-xs", error ? "text-rose-500" : (typeof helperText === 'string' && helperText.startsWith('✓') ? "text-emerald-600 font-medium" : "text-slate-500"))}>
           {error || helperText}
         </p>
       )}
