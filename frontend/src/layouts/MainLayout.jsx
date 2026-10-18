@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
-import { BrainCircuit, Menu, X, ExternalLink, Globe, ArrowUp, Mail, MapPin, Sparkles, Clock, CheckCircle2 } from 'lucide-react';
+import { BrainCircuit, Menu, X, ExternalLink, Globe, ArrowUp, Mail, MapPin, Sparkles, CheckCircle2 } from 'lucide-react';
 import Button from '../components/Button';
 
 const MainLayout = () => {
@@ -395,15 +395,7 @@ const MainLayout = () => {
                   <span className="text-xs text-slate-400 block mb-1">Office Location</span>
                   <div className="text-slate-300 flex items-start gap-2">
                     <MapPin className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
-                    <span>Chennai, Tamil Nadu, India</span>
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-xs text-slate-400 block mb-1">Business Hours</span>
-                  <div className="text-slate-300 flex items-start gap-2">
-                    <Clock className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-                    <span>Mon – Fri: 9am – 6pm IST</span>
+                    <span>Salem, Tamil Nadu, India</span>
                   </div>
                 </div>
 
