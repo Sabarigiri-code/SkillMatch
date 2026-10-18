@@ -49,3 +49,7 @@ dist-ssr/
 .env
 .env.*
 !.env.example
+
+# Uploaded Files
+backend/uploads/
+uploads/

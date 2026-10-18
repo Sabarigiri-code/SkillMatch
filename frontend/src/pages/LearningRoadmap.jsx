@@ -278,26 +278,31 @@ const LearningRoadmap = () => {
         return;
       }
 
-      // 3. Fallback: If navigating via sidebar/back button, load the active workspace's roadmap
-      if (activeJobMatchId) {
-        setIsLoading(true);
-        try {
-          const res = await api.get('/roadmaps');
-          const existing = res.data.find(r => r.jobMatchId === activeJobMatchId);
+      // 3. Fallback: If navigating via sidebar/back button, load the active workspace's roadmap or latest roadmap
+      setIsLoading(true);
+      try {
+        const res = await api.get('/roadmaps');
+        if (res.data && res.data.length > 0) {
+          let existing = null;
+          if (activeJobMatchId) {
+            existing = res.data.find(r => r.jobMatchId === activeJobMatchId);
+          }
+          if (!existing) {
+            existing = res.data[0];
+          }
           if (existing) {
             setRoadmap(existing);
             localStorage.setItem('activeFlow_roadmap', JSON.stringify(existing));
           } else {
             setRoadmap(null);
           }
-        } catch (err) {
-          console.error("Failed to load roadmap for workspace", err);
+        } else {
           setRoadmap(null);
-        } finally {
-          setIsLoading(false);
         }
-      } else {
+      } catch (err) {
+        console.error("Failed to load roadmap for workspace", err);
         setRoadmap(null);
+      } finally {
         setIsLoading(false);
       }
     };

@@ -69,18 +69,26 @@ const SkillAssessment = () => {
       
       let targetRoadmapId = location.state?.roadmapId;
       
-      // If no routing state but we have an active workspace, find the roadmap for it
-      if (!targetRoadmapId && activeJobMatchId) {
+      // If no routing state, lookup roadmap by active workspace or latest available roadmap
+      if (!targetRoadmapId) {
         try {
           const roadmapsRes = await axios.get('http://localhost:8080/api/roadmaps', {
             headers: { Authorization: `Bearer ${tok()}` }
           });
-          const existing = roadmapsRes.data.find(r => r.jobMatchId === activeJobMatchId);
-          if (existing) {
-            targetRoadmapId = existing.id;
+          if (roadmapsRes.data && roadmapsRes.data.length > 0) {
+            let existing = null;
+            if (activeJobMatchId) {
+              existing = roadmapsRes.data.find(r => r.jobMatchId === activeJobMatchId);
+            }
+            if (!existing) {
+              existing = roadmapsRes.data[0];
+            }
+            if (existing) {
+              targetRoadmapId = existing.id;
+            }
           }
         } catch (err) {
-          console.error("Failed to lookup roadmap by active workspace", err);
+          console.error("Failed to lookup roadmap for assessment", err);
         }
       }
 

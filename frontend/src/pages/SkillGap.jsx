@@ -12,6 +12,7 @@ import EmptyState from '../components/EmptyState';
 
 
 
+import api from '../utils/api';
 import { useWorkspace } from '../context/WorkspaceContext';
 
 const SkillGap = () => {
@@ -32,29 +33,26 @@ const SkillGap = () => {
         return;
       } 
       
-      // 2. If navigating via sidebar or back button, try to load the active workspace's match
-      if (activeJobMatchId) {
-        setIsLoading(true);
-        try {
-          const token = localStorage.getItem('token');
-          const res = await axios.get(`http://localhost:8080/api/matches`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          const match = res.data.find(m => m.id === activeJobMatchId);
-          if (match) {
-            setMatchData(match);
-          } else {
-            setMatchData(null);
+      // 2. If navigating via sidebar or back button, try to load the active workspace's match or latest match
+      setIsLoading(true);
+      try {
+        const res = await api.get('/matches');
+        if (res.data && res.data.length > 0) {
+          let match = null;
+          if (activeJobMatchId) {
+            match = res.data.find(m => m.id === activeJobMatchId);
           }
-        } catch (err) {
-          console.error("Failed to load match data for skill gaps", err);
+          if (!match) {
+            match = res.data[0];
+          }
+          setMatchData(match || null);
+        } else {
           setMatchData(null);
-        } finally {
-          setIsLoading(false);
         }
-      } else {
-        // 3. No state and no active workspace -> show empty state
+      } catch (err) {
+        console.error("Failed to load match data for skill gaps", err);
         setMatchData(null);
+      } finally {
         setIsLoading(false);
       }
     };
