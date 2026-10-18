@@ -18,6 +18,7 @@ const Login = () => {
 
   // Reset Password Modal states
   const [showResetModal, setShowResetModal] = useState(false);
+  const [resetEmailVal, setResetEmailVal] = useState('');
   const [resetPasswordVal, setResetPasswordVal] = useState('');
   const [confirmResetVal, setConfirmResetVal] = useState('');
   const [showResetPassword, setShowResetPassword] = useState(false);
@@ -26,18 +27,10 @@ const Login = () => {
   const [resetSuccessMsg, setResetSuccessMsg] = useState('');
 
   useEffect(() => {
-    // Check if the user previously checked "Remember me"
-    const savedRememberMe = localStorage.getItem('skillmatch_remember_me') === 'true';
-    const savedEmail = localStorage.getItem('skillmatch_remembered_email') || '';
-    const savedPassword = localStorage.getItem('skillmatch_remembered_password') || '';
-
-    if (savedRememberMe && savedEmail) {
-      setRememberMe(true);
-      setFormData({ email: savedEmail, password: savedPassword });
-    } else {
-      setRememberMe(false);
-      setFormData({ email: '', password: '' });
-    }
+    // Clean up any legacy saved credentials for privacy and security
+    localStorage.removeItem('skillmatch_remember_me');
+    localStorage.removeItem('skillmatch_remembered_email');
+    localStorage.removeItem('skillmatch_remembered_password');
   }, []);
 
   const validateForm = () => {
@@ -71,15 +64,11 @@ const Login = () => {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
 
-        // Manage Remember Me storage
+        // Never store passwords in localStorage
         if (rememberMe) {
           localStorage.setItem('skillmatch_remember_me', 'true');
-          localStorage.setItem('skillmatch_remembered_email', formData.email);
-          localStorage.setItem('skillmatch_remembered_password', formData.password);
         } else {
           localStorage.removeItem('skillmatch_remember_me');
-          localStorage.removeItem('skillmatch_remembered_email');
-          localStorage.removeItem('skillmatch_remembered_password');
         }
 
         navigate(location.state?.returnTo || '/dashboard');
@@ -94,6 +83,15 @@ const Login = () => {
   };
 
   const handleResetPassword = async () => {
+    const targetEmail = (resetEmailVal || formData.email || '').trim();
+    if (!targetEmail) {
+      setResetError('Please enter your account email address');
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(targetEmail)) {
+      setResetError('Please enter a valid email address');
+      return;
+    }
     if (!resetPasswordVal || resetPasswordVal.length < 6) {
       setResetError('Password must be at least 6 characters');
       return;
@@ -106,13 +104,8 @@ const Login = () => {
     setIsResetting(true);
     setResetError('');
     try {
-      const email = formData.email;
-      if (!email) {
-        setResetError('Please enter your email address on the login form first');
-        return;
-      }
       const res = await api.post('/auth/reset-password', {
-        email: email,
+        email: targetEmail,
         newPassword: resetPasswordVal
       });
 
@@ -194,15 +187,7 @@ const Login = () => {
                 name="remember-me"
                 type="checkbox"
                 checked={rememberMe}
-                onChange={(e) => {
-                  const isChecked = e.target.checked;
-                  setRememberMe(isChecked);
-                  if (!isChecked) {
-                    localStorage.removeItem('skillmatch_remember_me');
-                    localStorage.removeItem('skillmatch_remembered_email');
-                    localStorage.removeItem('skillmatch_remembered_password');
-                  }
-                }}
+                onChange={(e) => setRememberMe(e.target.checked)}
                 className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer"
               />
               <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-700 cursor-pointer">
@@ -214,10 +199,12 @@ const Login = () => {
               <button
                 type="button"
                 onClick={() => {
-                  setResetPasswordVal(formData.password || '');
-                  setConfirmResetVal(formData.password || '');
+                  setResetEmailVal(formData.email || '');
+                  setResetPasswordVal('');
+                  setConfirmResetVal('');
                   setShowResetModal(true);
                   setResetError('');
+                  setResetSuccessMsg('');
                 }}
                 className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
               >
@@ -260,7 +247,7 @@ const Login = () => {
             </div>
 
             <p className="text-xs text-slate-500 leading-relaxed">
-              Enter your desired password for <span className="font-bold text-slate-800">{formData.email || 'your account'}</span>. Once saved, you will be logged in immediately.
+              Enter your registered account email and your new password. Once updated, you will be signed in securely.
             </p>
 
             {resetError && (
@@ -278,6 +265,17 @@ const Login = () => {
             )}
 
             <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Account Email</label>
+                <input
+                  type="email"
+                  placeholder="Enter your account email"
+                  value={resetEmailVal}
+                  onChange={(e) => setResetEmailVal(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                />
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">New Password</label>
                 <div className="relative">
