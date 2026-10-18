@@ -17,10 +17,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Service
+@SuppressWarnings("null")
 public class MatchingService {
 
     private final JobMatchRepository jobMatchRepository;

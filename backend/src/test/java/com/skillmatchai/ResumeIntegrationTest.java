@@ -1,7 +1,6 @@
 package com.skillmatchai;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.skillmatchai.dto.AuthResponse;
 import com.skillmatchai.dto.LoginRequest;
 import com.skillmatchai.dto.RegisterRequest;
 import com.skillmatchai.repository.ResumeRepository;
@@ -17,14 +16,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.io.ByteArrayOutputStream;
-import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -32,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@SuppressWarnings("null")
 class ResumeIntegrationTest {
 
     @Autowired

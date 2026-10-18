@@ -17,7 +17,7 @@ public class OtpToken {
 
     private String otp;
 
-    @Indexed(expireAfterSeconds = 600) // TTL: Document will be automatically deleted after 10 minutes
+    @Indexed(expireAfter = "10m") // TTL: Document will be automatically deleted after 10 minutes
     private LocalDateTime createdAt;
 
     public OtpToken() {}

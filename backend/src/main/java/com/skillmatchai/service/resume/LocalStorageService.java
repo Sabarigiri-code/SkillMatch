@@ -20,6 +20,7 @@ import java.util.UUID;
  * To swap to S3: implement StorageService with @Primary and this becomes inactive.
  */
 @Service
+@SuppressWarnings("null")
 public class LocalStorageService implements StorageService {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalStorageService.class);

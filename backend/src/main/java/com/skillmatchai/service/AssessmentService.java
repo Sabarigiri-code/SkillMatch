@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@SuppressWarnings("null")
 public class AssessmentService {
 
     private final AssessmentRepository assessmentRepository;

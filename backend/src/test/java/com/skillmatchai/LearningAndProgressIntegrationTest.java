@@ -23,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@SuppressWarnings("null")
 class LearningAndProgressIntegrationTest {
 
     @Autowired
@@ -44,7 +45,6 @@ class LearningAndProgressIntegrationTest {
     private InterviewRepository interviewRepository;
 
     private String userToken;
-    private String userId;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -70,7 +70,6 @@ class LearningAndProgressIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(login))).andReturn();
         userToken = objectMapper.readTree(res.getResponse().getContentAsString()).get("token").asText();
-        userId = objectMapper.readTree(res.getResponse().getContentAsString()).get("user").get("id").asText();
     }
 
     @Test

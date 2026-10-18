@@ -13,11 +13,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@SuppressWarnings("null")
 public class ResumeService {
 
     private static final Logger logger = LoggerFactory.getLogger(ResumeService.class);

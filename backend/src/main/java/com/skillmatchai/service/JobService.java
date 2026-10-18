@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@SuppressWarnings("null")
 public class JobService {
 
     private final JobRepository jobRepository;
@@ -70,7 +71,7 @@ public class JobService {
     public void deleteJob(String id, String userEmail) {
         String userId = resolveUserId(userEmail);
         Job job = findAndVerifyOwnership(id, userId);
-        jobRepository.deleteById(id);
+        jobRepository.delete(job);
     }
 
     private String resolveUserId(String email) {

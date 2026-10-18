@@ -35,8 +35,8 @@ public class GeminiService {
 
     public GeminiService(RestTemplateBuilder restTemplateBuilder) {
         this.restTemplate = restTemplateBuilder
-                .setConnectTimeout(Duration.ofSeconds(15))
-                .setReadTimeout(Duration.ofSeconds(90)) // Extended for 25+ question generation
+                .connectTimeout(Duration.ofSeconds(15))
+                .readTimeout(Duration.ofSeconds(90)) // Extended for 25+ question generation
                 .build();
     }
 

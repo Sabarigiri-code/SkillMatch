@@ -1,7 +1,6 @@
 package com.skillmatchai.service.ai.dto;
 
 import java.util.List;
-import java.util.Map;
 
 public class GeminiRequest {
     private List<Content> contents;
