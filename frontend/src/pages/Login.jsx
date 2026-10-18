@@ -16,11 +16,6 @@ const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
 
-  const [emailReadOnly, setEmailReadOnly] = useState(true);
-  const [passwordReadOnly, setPasswordReadOnly] = useState(true);
-  const [rememberedEmail, setRememberedEmail] = useState('');
-  const [rememberedPassword, setRememberedPassword] = useState('');
-
   // Reset Password Modal states
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetPasswordVal, setResetPasswordVal] = useState('');
@@ -38,54 +33,12 @@ const Login = () => {
 
     if (savedRememberMe && savedEmail) {
       setRememberMe(true);
-      setRememberedEmail(savedEmail);
-      setRememberedPassword(savedPassword);
+      setFormData({ email: savedEmail, password: savedPassword });
     } else {
       setRememberMe(false);
-      setRememberedEmail('');
-      setRememberedPassword('');
+      setFormData({ email: '', password: '' });
     }
-
-    // Default the form inputs to completely empty so other users can enter their own ID freely
-    setFormData({ email: '', password: '' });
   }, []);
-
-  const handleEmailFocus = () => {
-    setEmailReadOnly(false);
-    // If a remembered email exists and the box is empty, provide auto-fill
-    if (rememberedEmail && !formData.email) {
-      setFormData(prev => ({ 
-        email: rememberedEmail, 
-        password: prev.password || rememberedPassword 
-      }));
-    }
-  };
-
-  const handlePasswordFocus = () => {
-    setPasswordReadOnly(false);
-    // If remembered password exists and matches remembered email, auto-fill password
-    if (rememberedPassword && formData.email === rememberedEmail && !formData.password) {
-      setFormData(prev => ({ ...prev, password: rememberedPassword }));
-    }
-  };
-
-  const handleClearRemembered = (e) => {
-    if (e) e.stopPropagation();
-    localStorage.removeItem('skillmatch_remember_me');
-    localStorage.removeItem('skillmatch_remembered_email');
-    localStorage.removeItem('skillmatch_remembered_password');
-    setRememberedEmail('');
-    setRememberedPassword('');
-    setRememberMe(false);
-    setFormData({ email: '', password: '' });
-  };
-
-  const handleApplyRemembered = () => {
-    setFormData({ email: rememberedEmail, password: rememberedPassword });
-    setRememberMe(true);
-    setEmailReadOnly(false);
-    setPasswordReadOnly(false);
-  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -187,46 +140,12 @@ const Login = () => {
       </CardHeader>
       <CardContent>
         
-        {/* Remembered Account Quick Bar (if saved in localStorage) */}
-        {rememberedEmail && (
-          <div className="mb-4 p-2.5 bg-indigo-50/80 border border-indigo-200 rounded-xl text-xs flex items-center justify-between shadow-xs">
-            <div 
-              onClick={handleApplyRemembered} 
-              className="flex items-center gap-2 text-indigo-950 hover:text-indigo-700 cursor-pointer flex-1 truncate font-medium"
-              title="Click to fill saved account"
-            >
-              <KeyRound className="w-4 h-4 text-indigo-600 shrink-0" />
-              <span className="truncate">Saved account: <strong className="text-indigo-700">{rememberedEmail}</strong></span>
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0 ml-2">
-              <button
-                type="button"
-                onClick={handleApplyRemembered}
-                className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-[11px] transition-colors cursor-pointer shadow-xs"
-              >
-                Fill
-              </button>
-              <button
-                type="button"
-                onClick={handleClearRemembered}
-                className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
-                title="Forget saved credentials"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             label="Email"
-            name="sm_account_identifier"
+            name="email"
             type="email"
-            autoComplete="one-time-code"
-            readOnly={emailReadOnly}
-            onFocus={handleEmailFocus}
-            onClick={handleEmailFocus}
+            autoComplete="email"
             placeholder="Enter your email"
             leftIcon={<Mail className="h-4 w-4" />}
             value={formData.email}
@@ -237,12 +156,9 @@ const Login = () => {
           <div className="space-y-1.5">
             <Input
               label="Password"
-              name="sm_account_secret"
+              name="password"
               type={showPassword ? 'text' : 'password'}
-              autoComplete="new-password"
-              readOnly={passwordReadOnly}
-              onFocus={handlePasswordFocus}
-              onClick={handlePasswordFocus}
+              autoComplete="current-password"
               placeholder="Enter your password"
               leftIcon={<Lock className="h-4 w-4" />}
               rightIcon={
@@ -285,8 +201,6 @@ const Login = () => {
                     localStorage.removeItem('skillmatch_remember_me');
                     localStorage.removeItem('skillmatch_remembered_email');
                     localStorage.removeItem('skillmatch_remembered_password');
-                    setRememberedEmail('');
-                    setRememberedPassword('');
                   }
                 }}
                 className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer"
