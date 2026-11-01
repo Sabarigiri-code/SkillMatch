@@ -676,13 +676,13 @@ const InterviewPrep = () => {
               {/* Recorded Voice Audio Preview */}
               {audioPreviews[questions[currentQIdx]?.id] && (
                 <div className="p-3.5 bg-gradient-to-r from-indigo-50 to-purple-50/50 border border-indigo-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-fadeIn">
-                  <div className="flex items-center gap-2.5 text-xs text-indigo-950 font-semibold">
+                  <div className="flex items-center gap-2.5 text-xs text-indigo-950 dark:text-indigo-100 font-semibold">
                     <div className="p-1.5 bg-indigo-600 text-white rounded-lg">
                       <Volume2 className="h-4 w-4" />
                     </div>
                     <div>
                       <span>Recorded Voice Answer</span>
-                      <span className="text-emerald-700 font-medium ml-2 bg-emerald-100 px-2 py-0.5 rounded text-[11px] border border-emerald-200">
+                      <span className="text-emerald-700 dark:text-emerald-300 font-medium ml-2 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded text-[11px] border border-emerald-200 dark:border-emerald-800">
                         ✓ Stored for Database
                       </span>
                     </div>
@@ -902,7 +902,7 @@ const InterviewPrep = () => {
                       <h5 className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                         <Star className="h-4 w-4" /> Expected / Sample Answer
                       </h5>
-                      <div className="bg-indigo-50/60 p-4 rounded-lg border border-indigo-100 text-indigo-950 whitespace-pre-wrap text-sm leading-relaxed min-h-[90px]">
+                      <div className="bg-indigo-50/60 dark:bg-indigo-950/40 p-4 rounded-lg border border-indigo-100 dark:border-indigo-800/80 text-indigo-950 dark:text-indigo-100 whitespace-pre-wrap text-sm leading-relaxed min-h-[90px]">
                         {q.expectedAnswer}
                       </div>
                     </div>
@@ -937,8 +937,8 @@ const InterviewPrep = () => {
                   <div className="mt-5 bg-amber-50/70 p-4 rounded-lg border border-amber-200/60 flex items-start gap-3">
                     <Lightbulb className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                     <div className="w-full">
-                      <span className="text-xs font-bold text-amber-800 uppercase tracking-wider block mb-1">AI Evaluator Feedback</span>
-                      <p className="text-amber-950 text-sm leading-relaxed">
+                      <span className="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider block mb-1">AI Evaluator Feedback</span>
+                      <p className="text-amber-950 dark:text-amber-100 text-sm leading-relaxed">
                         {q.feedback || evaluation.suggestions || (qScore === 0 
                           ? "No substantive technical answer was provided to demonstrate proficiency on this question. Review the sample answer above to learn the expected concepts, complexity analysis, and implementation details."
                           : "Review the sample answer above to compare with your submission.")}

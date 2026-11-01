@@ -89,12 +89,29 @@ public class RoadmapService {
         LearningRoadmap roadmap = getById(id, userEmail);
         
         int totalWeeks = roadmap.getWeeks().size();
-        int completedWeeks = 0;
 
-        for (LearningRoadmap.RoadmapWeek week : roadmap.getWeeks()) {
+        for (int i = 0; i < roadmap.getWeeks().size(); i++) {
+            LearningRoadmap.RoadmapWeek week = roadmap.getWeeks().get(i);
             if (week.getWeekNumber() == weekNumber) {
+                // Sequential requirement: cannot complete unless previous week is completed
+                if (completed && i > 0 && !roadmap.getWeeks().get(i - 1).isCompleted()) {
+                    throw new IllegalArgumentException("Cannot complete module " + weekNumber + " before completing the preceding module.");
+                }
+
                 week.setCompleted(completed);
+
+                // If marking incomplete, cascade reset to all subsequent weeks
+                if (!completed) {
+                    for (int j = i + 1; j < roadmap.getWeeks().size(); j++) {
+                        roadmap.getWeeks().get(j).setCompleted(false);
+                    }
+                }
+                break;
             }
+        }
+
+        int completedWeeks = 0;
+        for (LearningRoadmap.RoadmapWeek week : roadmap.getWeeks()) {
             if (week.isCompleted()) {
                 completedWeeks++;
             }

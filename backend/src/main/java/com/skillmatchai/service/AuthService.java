@@ -7,7 +7,6 @@ import com.skillmatchai.dto.UserResponse;
 import com.skillmatchai.entity.Role;
 import com.skillmatchai.entity.User;
 import com.skillmatchai.exception.EmailAlreadyExistsException;
-import com.skillmatchai.exception.InvalidCredentialsException;
 import com.skillmatchai.repository.UserRepository;
 import com.skillmatchai.security.JwtService;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -72,11 +71,13 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(InvalidCredentialsException::new);
+        String email = request.getEmail() != null ? request.getEmail().trim().toLowerCase() : "";
+        User user = userRepository.findByEmail(email)
+                .orElseGet(() -> userRepository.findByEmail(request.getEmail() != null ? request.getEmail().trim() : "")
+                        .orElseThrow(() -> new com.skillmatchai.exception.ResourceNotFoundException("No account found with this email address. Please check your spelling or register.")));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new InvalidCredentialsException();
+            throw new com.skillmatchai.exception.InvalidCredentialsException("Incorrect password. Please check your password and try again.");
         }
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());

@@ -37,6 +37,24 @@ public class OtpService {
         emailService.sendOtpEmail(email, otp);
     }
 
+    public void generateAndSendPasswordResetOtp(String email) {
+        // Remove any existing OTPs for this email to prevent spam/confusion
+        otpTokenRepository.deleteByEmail(email);
+
+        // Generate 6-digit random OTP
+        String otp = String.format("%06d", new Random().nextInt(999999));
+
+        OtpToken token = new OtpToken();
+        token.setEmail(email);
+        token.setOtp(otp);
+        token.setCreatedAt(LocalDateTime.now());
+        
+        otpTokenRepository.save(token);
+
+        // Send via Email with password reset styling
+        emailService.sendPasswordResetOtpEmail(email, otp);
+    }
+
     public boolean verifyOtp(String email, String otp) {
         Optional<OtpToken> tokenOpt = otpTokenRepository.findByEmailAndOtp(email, otp);
         if (tokenOpt.isPresent()) {

@@ -10,16 +10,33 @@
   color: #0f172a;
   background-color: #f8fafc;
 
-  font-synthesize: none;
-  text-rendering: optimizeLegibility;
+  font-synthesis: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  overflow-x: hidden;
+  scroll-behavior: auto;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Scroll Performance Optimizations */
+.scroll-section {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 650px;
+}
+
+.gpu-layer {
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 @media (prefers-color-scheme: light) {
@@ -42,12 +59,10 @@ input:-webkit-autofill:active {
 /* Secure input masking to avoid browser password autofill popup */
 .secure-text-disc {
   -webkit-text-security: disc !important;
-  text-security: disc !important;
 }
 
 .secure-text-none {
   -webkit-text-security: none !important;
-  text-security: none !important;
 }
 
 /* =========================================================
@@ -60,9 +75,16 @@ input:-webkit-autofill:active {
   color: #f8fafc !important; /* text-slate-50 */
 }
 
-.dark .bg-slate-50, 
-.dark .bg-slate-100 {
+.dark .bg-slate-50 {
   background-color: #0f172a !important; /* bg-slate-900 */
+}
+
+.dark .bg-slate-100 {
+  background-color: #1e293b !important; /* distinct card/subcontainer tint */
+}
+
+.dark .bg-slate-200 {
+  background-color: #334155 !important; /* distinct pill/badge tint */
 }
 
 .dark .bg-white {
@@ -70,17 +92,150 @@ input:-webkit-autofill:active {
   border-color: #334155 !important; /* border-slate-700 */
 }
 
-/* Text Colors */
+/* =========================================================
+   TEXT CONTRAST GUARANTEES (WCAG AAA/AA)
+   ========================================================= */
+
+/* Primary Headings & Bold Text */
 .dark .text-slate-900, 
 .dark .text-slate-800,
-.dark .text-slate-700,
-.dark .text-gray-900 {
-  color: #f1f5f9 !important; /* text-slate-100 */
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-zinc-900,
+.dark .text-zinc-800 {
+  color: #f8fafc !important; /* crisp slate-50 */
 }
 
+/* Body & Medium Text */
+.dark .text-slate-700,
+.dark .text-gray-700,
+.dark .text-zinc-700 {
+  color: #e2e8f0 !important; /* slate-200 */
+}
+
+/* Secondary & Muted Text (Guaranteed contrast, not washed out) */
 .dark .text-slate-600, 
-.dark .text-slate-500 {
-  color: #94a3b8 !important; /* text-slate-400 */
+.dark .text-slate-500,
+.dark .text-gray-600,
+.dark .text-gray-500,
+.dark .text-zinc-600,
+.dark .text-zinc-500 {
+  color: #cbd5e1 !important; /* slate-300: crisp contrast on dark cards */
+}
+
+.dark .text-slate-400,
+.dark .text-gray-400,
+.dark .text-zinc-400 {
+  color: #94a3b8 !important; /* slate-400 */
+}
+
+/* Tinted Dark Texts (Fixes -950 and -900 unreadable black-on-dark) */
+.dark .text-indigo-950,
+.dark .text-indigo-900 {
+  color: #e0e7ff !important; /* indigo-100 */
+}
+.dark .text-indigo-800,
+.dark .text-indigo-700 {
+  color: #a5b4fc !important; /* indigo-300 */
+}
+.dark .text-indigo-600 {
+  color: #818cf8 !important; /* indigo-400 */
+}
+
+.dark .text-violet-950,
+.dark .text-violet-900,
+.dark .text-purple-950,
+.dark .text-purple-900 {
+  color: #ede9fe !important; /* violet-100 */
+}
+.dark .text-violet-800,
+.dark .text-violet-700,
+.dark .text-purple-800,
+.dark .text-purple-700 {
+  color: #c4b5fd !important; /* violet-300 */
+}
+.dark .text-violet-600,
+.dark .text-purple-600 {
+  color: #a78bfa !important; /* violet-400 */
+}
+
+.dark .text-emerald-950,
+.dark .text-emerald-900,
+.dark .text-green-950,
+.dark .text-green-900 {
+  color: #d1fae5 !important; /* emerald-100 */
+}
+.dark .text-emerald-800,
+.dark .text-emerald-700,
+.dark .text-green-800,
+.dark .text-green-700 {
+  color: #6ee7b7 !important; /* emerald-300 */
+}
+.dark .text-emerald-600,
+.dark .text-green-600 {
+  color: #34d399 !important; /* emerald-400 */
+}
+
+.dark .text-amber-950,
+.dark .text-amber-900,
+.dark .text-yellow-950,
+.dark .text-yellow-900 {
+  color: #fef3c7 !important; /* amber-100 */
+}
+.dark .text-amber-800,
+.dark .text-amber-700,
+.dark .text-yellow-800,
+.dark .text-yellow-700 {
+  color: #fde047 !important; /* amber-300 */
+}
+.dark .text-amber-600,
+.dark .text-yellow-600 {
+  color: #fbbf24 !important; /* amber-400 */
+}
+
+.dark .text-rose-950,
+.dark .text-rose-900,
+.dark .text-red-950,
+.dark .text-red-900 {
+  color: #ffe4e6 !important; /* rose-100 */
+}
+.dark .text-rose-800,
+.dark .text-rose-700,
+.dark .text-red-800,
+.dark .text-red-700 {
+  color: #fda4af !important; /* rose-300 */
+}
+.dark .text-rose-600,
+.dark .text-red-600 {
+  color: #fb7185 !important; /* rose-400 */
+}
+
+.dark .text-blue-950,
+.dark .text-blue-900 {
+  color: #dbeafe !important; /* blue-100 */
+}
+.dark .text-blue-800,
+.dark .text-blue-700 {
+  color: #93c5fd !important; /* blue-300 */
+}
+.dark .text-blue-600 {
+  color: #60a5fa !important; /* blue-400 */
+}
+
+/* Ensure bright yellow/amber/emerald action buttons preserve high contrast dark text */
+.dark .bg-amber-400,
+.dark .bg-amber-300,
+.dark .bg-yellow-400,
+.dark .bg-yellow-300,
+.dark .bg-emerald-400 {
+  color: #020617 !important;
+}
+.dark .bg-amber-400 *,
+.dark .bg-amber-300 *,
+.dark .bg-yellow-400 *,
+.dark .bg-yellow-300 *,
+.dark .bg-emerald-400 * {
+  color: #020617 !important;
 }
 
 /* Hover Backgrounds */
@@ -115,40 +270,70 @@ input:-webkit-autofill:active {
 }
 
 /* Contextual Backgrounds */
-.dark .bg-emerald-50, .dark .bg-emerald-50\/30, .dark .bg-emerald-100 {
-  background-color: rgba(6, 78, 59, 0.4) !important; /* emerald-900/40 */
-  border-color: rgba(6, 78, 59, 0.8) !important;
-}
-.dark .bg-amber-50, .dark .bg-amber-50\/30, .dark .bg-amber-100 {
-  background-color: rgba(120, 53, 15, 0.4) !important; /* amber-900/40 */
-  border-color: rgba(120, 53, 15, 0.8) !important;
-}
-.dark .bg-rose-50, .dark .bg-rose-50\/30, .dark .bg-rose-100 {
-  background-color: rgba(136, 19, 55, 0.4) !important; /* rose-900/40 */
-  border-color: rgba(136, 19, 55, 0.8) !important;
-}
-.dark .bg-indigo-50, .dark .bg-indigo-50\/30, .dark .bg-indigo-100 {
-  background-color: rgba(49, 46, 129, 0.4) !important; /* indigo-900/40 */
-  border-color: rgba(49, 46, 129, 0.8) !important;
+.dark .bg-emerald-50, 
+.dark .bg-emerald-50\/30, 
+.dark .bg-emerald-50\/50, 
+.dark .bg-emerald-50\/60, 
+.dark .bg-emerald-50\/80, 
+.dark .bg-emerald-100 {
+  background-color: rgba(6, 78, 59, 0.45) !important; /* emerald-900/45 */
+  border-color: rgba(16, 185, 129, 0.3) !important;
 }
 
-/* Contextual Texts */
-.dark .text-emerald-800, .dark .text-emerald-900, .dark .text-emerald-700 {
-  color: #34d399 !important; /* emerald-400 */
+.dark .bg-amber-50, 
+.dark .bg-amber-50\/30, 
+.dark .bg-amber-50\/50, 
+.dark .bg-amber-50\/60, 
+.dark .bg-amber-50\/70, 
+.dark .bg-amber-100 {
+  background-color: rgba(120, 53, 15, 0.45) !important; /* amber-900/45 */
+  border-color: rgba(245, 158, 11, 0.3) !important;
 }
-.dark .text-amber-800, .dark .text-amber-900, .dark .text-amber-700 {
-  color: #fbbf24 !important; /* amber-400 */
+
+.dark .bg-rose-50, 
+.dark .bg-rose-50\/30, 
+.dark .bg-rose-50\/50, 
+.dark .bg-rose-50\/60, 
+.dark .bg-rose-50\/80, 
+.dark .bg-rose-100 {
+  background-color: rgba(136, 19, 55, 0.45) !important; /* rose-900/45 */
+  border-color: rgba(244, 63, 94, 0.3) !important;
 }
-.dark .text-rose-800, .dark .text-rose-900, .dark .text-rose-700 {
-  color: #fb7185 !important; /* rose-400 */
+
+.dark .bg-indigo-50, 
+.dark .bg-indigo-50\/30, 
+.dark .bg-indigo-50\/50, 
+.dark .bg-indigo-50\/60, 
+.dark .bg-indigo-50\/70, 
+.dark .bg-indigo-100 {
+  background-color: rgba(49, 46, 129, 0.45) !important; /* indigo-900/45 */
+  border-color: rgba(99, 102, 241, 0.3) !important;
 }
-.dark .text-indigo-800, .dark .text-indigo-900, .dark .text-indigo-700, .dark .text-indigo-600 {
-  color: #818cf8 !important; /* indigo-400 */
+
+.dark .bg-violet-50, 
+.dark .bg-violet-50\/30, 
+.dark .bg-violet-50\/50, 
+.dark .bg-violet-50\/60, 
+.dark .bg-violet-50\/90, 
+.dark .bg-violet-100, 
+.dark .bg-violet-100\/70,
+.dark .bg-purple-50, 
+.dark .bg-purple-100 {
+  background-color: rgba(76, 29, 149, 0.45) !important; /* violet-900/45 */
+  border-color: rgba(139, 92, 246, 0.3) !important;
+}
+
+.dark .bg-blue-50, 
+.dark .bg-blue-50\/30, 
+.dark .bg-blue-50\/50, 
+.dark .bg-blue-100 {
+  background-color: rgba(30, 58, 138, 0.45) !important; /* blue-900/45 */
+  border-color: rgba(59, 130, 246, 0.3) !important;
 }
 
 /* Borders */
 .dark .border-slate-100, 
-.dark .border-slate-200,
+.dark .border-slate-200, 
 .dark .border-gray-200 {
   border-color: #334155 !important; /* border-slate-700 */
 }
@@ -225,6 +410,34 @@ input:-webkit-autofill:active {
   border-color: #312e81 !important; /* indigo-800 */
 }
 
+/* =========================================================
+   LEARNING ROADMAP MODULE CARDS IN DARK MODE
+   ========================================================= */
+.dark .week-card {
+  background-color: #1e293b !important;
+  background-image: none !important;
+  border-color: #334155 !important;
+}
+
+.dark .week-card.week-card-completed {
+  background-color: #064e3b !important;
+  background-image: linear-gradient(to right, rgba(6, 78, 59, 0.7), rgba(19, 78, 74, 0.6)) !important;
+  border-color: rgba(52, 211, 153, 0.45) !important;
+}
+
+.dark .week-card.week-card-current {
+  background-color: #1e1b4b !important;
+  background-image: linear-gradient(to right, rgba(49, 46, 129, 0.7), rgba(76, 29, 149, 0.6)) !important;
+  border-color: rgba(129, 140, 248, 0.5) !important;
+}
+
+.dark .week-card.week-card-locked {
+  background-color: rgba(30, 41, 59, 0.6) !important;
+  background-image: none !important;
+  border-color: #334155 !important;
+  opacity: 1 !important;
+}
+
 /* ═══════════════════════════════════════
    PROFESSIONAL PDF PRINT STYLESHEET
    ═══════════════════════════════════════ */
@@ -239,7 +452,6 @@ input:-webkit-autofill:active {
   *, *::before, *::after {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    color-adjust: exact !important;
   }
 
   /* Reset all scrolling and flex contexts for print to prevent clipping */

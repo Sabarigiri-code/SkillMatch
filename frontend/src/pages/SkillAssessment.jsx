@@ -664,25 +664,25 @@ const AssessmentResultsView = ({ resultData, isTimeExpired, onRetake, onNavigate
 
               {/* 4-Stat Metric Strip */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-100">
-                  <span className="text-xs font-bold text-indigo-700 uppercase tracking-wider block mb-1">Accuracy</span>
-                  <span className="text-2xl font-black text-indigo-950">{accuracyPct}%</span>
-                  <span className="text-[11px] text-indigo-500 block mt-0.5">overall precision</span>
+                <div className="p-3.5 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-xl border border-indigo-100 dark:border-indigo-800/80">
+                  <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider block mb-1">Accuracy</span>
+                  <span className="text-2xl font-black text-indigo-950 dark:text-indigo-100">{accuracyPct}%</span>
+                  <span className="text-[11px] text-indigo-500 dark:text-indigo-400 block mt-0.5">overall precision</span>
                 </div>
-                <div className="p-3.5 bg-emerald-50/60 rounded-xl border border-emerald-100">
-                  <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider block mb-1">Correct</span>
-                  <span className="text-2xl font-black text-emerald-950">{correctCount}</span>
-                  <span className="text-[11px] text-emerald-600 block mt-0.5">questions mastered</span>
+                <div className="p-3.5 bg-emerald-50/60 dark:bg-emerald-950/40 rounded-xl border border-emerald-100 dark:border-emerald-800/80">
+                  <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider block mb-1">Correct</span>
+                  <span className="text-2xl font-black text-emerald-950 dark:text-emerald-100">{correctCount}</span>
+                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400 block mt-0.5">questions mastered</span>
                 </div>
-                <div className="p-3.5 bg-rose-50/60 rounded-xl border border-rose-100">
-                  <span className="text-xs font-bold text-rose-700 uppercase tracking-wider block mb-1">Missed</span>
-                  <span className="text-2xl font-black text-rose-950">{incorrectCount}</span>
-                  <span className="text-[11px] text-rose-600 block mt-0.5">questions to review</span>
+                <div className="p-3.5 bg-rose-50/60 dark:bg-rose-950/40 rounded-xl border border-rose-100 dark:border-rose-800/80">
+                  <span className="text-xs font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider block mb-1">Missed</span>
+                  <span className="text-2xl font-black text-rose-950 dark:text-rose-100">{incorrectCount}</span>
+                  <span className="text-[11px] text-rose-600 dark:text-rose-400 block mt-0.5">questions to review</span>
                 </div>
-                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-                  <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block mb-1">Total Items</span>
-                  <span className="text-2xl font-black text-slate-900">{totalCount}</span>
-                  <span className="text-[11px] text-slate-500 block mt-0.5">evaluated questions</span>
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider block mb-1">Total Items</span>
+                  <span className="text-2xl font-black text-slate-900 dark:text-white">{totalCount}</span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">evaluated questions</span>
                 </div>
               </div>
 
@@ -950,14 +950,14 @@ const AssessmentResultsView = ({ resultData, isTimeExpired, onRetake, onNavigate
                             const isUserChoice = opt === res.userAnswer;
                             const isCorrectOpt = opt === res.correctAnswer;
                             
-                            let optStyle = "border-slate-200 bg-slate-50/60 text-slate-700";
-                            let badgeStyle = "bg-slate-200 text-slate-700";
+                            let optStyle = "border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/50 text-slate-700 dark:text-slate-200";
+                            let badgeStyle = "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200";
                             
                             if (isCorrectOpt) {
-                              optStyle = "border-emerald-500 bg-emerald-50/80 text-emerald-950 font-semibold ring-1 ring-emerald-400";
+                              optStyle = "border-emerald-500 bg-emerald-50/80 dark:bg-emerald-950/60 text-emerald-950 dark:text-emerald-100 font-semibold ring-1 ring-emerald-400";
                               badgeStyle = "bg-emerald-600 text-white";
                             } else if (isUserChoice && !res.isCorrect) {
-                              optStyle = "border-rose-400 bg-rose-50/80 text-rose-950 font-medium ring-1 ring-rose-300";
+                              optStyle = "border-rose-400 bg-rose-50/80 dark:bg-rose-950/60 text-rose-950 dark:text-rose-100 font-medium ring-1 ring-rose-300";
                               badgeStyle = "bg-rose-600 text-white";
                             }
 
@@ -1023,13 +1023,13 @@ const AssessmentResultsView = ({ resultData, isTimeExpired, onRetake, onNavigate
                     )}
 
                     {/* Explanatory Reason Box */}
-                    <div className="bg-indigo-50/60 border border-indigo-100 rounded-xl p-4 flex items-start gap-3">
-                      <Lightbulb className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
+                    <div className="bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-800/80 rounded-xl p-4 flex items-start gap-3">
+                      <Lightbulb className="h-5 w-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
                       <div className="space-y-1">
-                        <p className="text-xs font-bold text-indigo-700 uppercase tracking-wider">
+                        <p className="text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider">
                           Why this is correct
                         </p>
-                        <p className="text-sm text-slate-800 leading-relaxed">
+                        <p className="text-sm text-slate-800 dark:text-slate-100 leading-relaxed">
                           {res.explanation || 'The answer is verified according to standard technical specifications for this question.'}
                         </p>
                       </div>

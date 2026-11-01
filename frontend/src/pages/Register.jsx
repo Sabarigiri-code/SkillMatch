@@ -193,7 +193,7 @@ const Register = () => {
   };
 
   return (
-    <Card className="shadow-xl shadow-slate-200/50 my-8 relative">
+    <Card className="shadow-[0_20px_50px_-12px_rgba(79,70,229,0.12)] border border-slate-200/90 rounded-2xl my-8 relative bg-white">
       
       {/* Toast Notification */}
       <div className={`fixed top-4 right-4 z-[100] transition-all duration-300 transform ${toastMessage ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0 pointer-events-none'}`}>

@@ -123,17 +123,17 @@ const Home = () => {
       {/* 2. Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-indigo-50/70 via-white to-slate-50 pt-16 pb-24 lg:pt-24 lg:pb-32">
         {/* Ambient Mesh Gradients & Glow Orbs */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[550px] bg-gradient-to-tr from-indigo-400/25 via-violet-400/20 to-fuchsia-400/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -top-24 right-0 w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/3 -left-20 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[550px] bg-gradient-to-tr from-indigo-400/25 via-violet-400/20 to-fuchsia-400/15 rounded-full blur-3xl pointer-events-none [transform:translateZ(0)] will-change-transform [contain:paint]" />
+        <div className="absolute -top-24 right-0 w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none [transform:translateZ(0)] will-change-transform [contain:paint]" />
+        <div className="absolute top-1/3 -left-20 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl pointer-events-none [transform:translateZ(0)] will-change-transform [contain:paint]" />
         
         {/* Subtle Engineering Grid Pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e0e7ff_1px,transparent_1px),linear-gradient(to_bottom,#e0e7ff_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-40 pointer-events-none" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e0e7ff_1px,transparent_1px),linear-gradient(to_bottom,#e0e7ff_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-40 pointer-events-none [transform:translateZ(0)]" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
           
           {/* Top Pill Announcement */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 border border-indigo-200/80 shadow-[0_4px_20px_-4px_rgba(99,102,241,0.15)] text-indigo-700 text-xs sm:text-sm font-semibold mb-6 backdrop-blur-md hover:border-indigo-300 transition-all cursor-pointer group">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/95 border border-indigo-200/80 shadow-[0_4px_20px_-4px_rgba(99,102,241,0.15)] text-indigo-700 text-xs sm:text-sm font-semibold mb-6 hover:border-indigo-300 transition-all cursor-pointer group [transform:translateZ(0)]">
             <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
             <span className="flex h-2 w-2 rounded-full bg-emerald-500 -ml-4" />
             <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent font-bold">
@@ -169,7 +169,7 @@ const Home = () => {
             <Button 
               variant="secondary"
               size="lg"
-              className="w-full sm:w-auto rounded-full font-semibold px-8 py-4 border-2 border-slate-200 bg-white/90 backdrop-blur hover:bg-indigo-50/70 hover:border-indigo-300 hover:text-indigo-700 transition-all duration-300 group text-base shadow-sm"
+              className="w-full sm:w-auto rounded-full font-semibold px-8 py-4 border-2 border-slate-200 bg-white hover:bg-indigo-50/70 hover:border-indigo-300 hover:text-indigo-700 transition-all duration-300 group text-base shadow-sm"
               onClick={() => document.getElementById('demo-showcase')?.scrollIntoView({ behavior: 'smooth' })}
               leftIcon={<Sparkles className="h-5 w-5 text-indigo-500 group-hover:rotate-12 transition-transform" />}
             >
@@ -267,9 +267,9 @@ const Home = () => {
           </div>
 
           {/* Interactive Showcase Window with Floating Glass Badges */}
-          <div className="relative mx-auto max-w-5xl">
+          <div className="relative mx-auto max-w-5xl [transform:translateZ(0)]">
             {/* Floating Glassmorphic Badge 1 (Top Left) */}
-            <div className="hidden lg:flex absolute top-14 -left-10 bg-white/95 backdrop-blur-md border border-emerald-200 shadow-xl rounded-2xl p-3.5 items-center gap-3 z-20 animate-bounce duration-1000" style={{ animationDuration: '4s' }}>
+            <div className="hidden lg:flex absolute top-14 -left-10 bg-white/95 border border-emerald-200 shadow-xl rounded-2xl p-3.5 items-center gap-3 z-20 animate-bounce duration-1000 [transform:translateZ(0)]" style={{ animationDuration: '4s' }}>
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
                 <ShieldCheck className="w-6 h-6" />
               </div>
@@ -282,7 +282,7 @@ const Home = () => {
             </div>
 
             {/* Floating Glassmorphic Badge 2 (Bottom Right) */}
-            <div className="hidden lg:flex absolute -bottom-5 -right-6 bg-white/95 backdrop-blur-md border border-indigo-200 shadow-xl rounded-2xl p-3.5 items-center gap-3 z-20 animate-bounce duration-1000" style={{ animationDuration: '4.5s', animationDelay: '1s' }}>
+            <div className="hidden lg:flex absolute -bottom-5 -right-6 bg-white/95 border border-indigo-200 shadow-xl rounded-2xl p-3.5 items-center gap-3 z-20 animate-bounce duration-1000 [transform:translateZ(0)]" style={{ animationDuration: '4.5s', animationDelay: '1s' }}>
               <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center">
                 <Mic className="w-5 h-5 text-indigo-600" />
               </div>
@@ -296,7 +296,7 @@ const Home = () => {
             </div>
 
             {/* Main Interactive Showcase Container */}
-            <div className="relative rounded-3xl bg-white/95 backdrop-blur-xl border border-slate-200/90 shadow-[0_25px_70px_-15px_rgba(79,70,229,0.18)] overflow-hidden text-left">
+            <div className="relative rounded-3xl bg-white border border-slate-200/90 shadow-[0_25px_70px_-15px_rgba(79,70,229,0.18)] overflow-hidden text-left [transform:translateZ(0)]">
               
               {/* Window Header Bar with Live Tabs */}
               <div className="bg-slate-900 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800">
@@ -361,7 +361,7 @@ const Home = () => {
                     <div className="md:col-span-5 bg-gradient-to-b from-slate-50 to-white rounded-2xl border border-slate-200/90 p-5 relative overflow-hidden shadow-sm group">
                       {/* Laser Line */}
                       <div 
-                        className="absolute left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent shadow-[0_0_18px_rgba(99,102,241,0.9)] z-10 pointer-events-none"
+                        className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent shadow-[0_0_18px_rgba(99,102,241,0.9)] z-10 pointer-events-none will-change-transform [transform:translateZ(0)]"
                         style={{
                           animation: 'laserScan 3.5s ease-in-out infinite'
                         }}
@@ -631,32 +631,32 @@ const Home = () => {
                       </div>
 
                       {/* Step 2 */}
-                      <div className="flex items-start gap-4 p-3.5 bg-indigo-50/60 rounded-2xl border border-indigo-200">
+                      <div className="flex items-start gap-4 p-3.5 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-2xl border border-indigo-200 dark:border-indigo-800/80">
                         <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 font-bold text-xs">
                           2
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-indigo-950">{activeRole.roadmapMilestone}</span>
-                            <span className="text-[11px] text-indigo-600 font-bold bg-indigo-100 px-2 py-0.5 rounded-full">
+                            <span className="text-xs font-bold text-indigo-950 dark:text-indigo-100">{activeRole.roadmapMilestone}</span>
+                            <span className="text-[11px] text-indigo-600 dark:text-indigo-300 font-bold bg-indigo-100 dark:bg-indigo-900/60 px-2 py-0.5 rounded-full">
                               In Progress
                             </span>
                           </div>
-                          <p className="text-xs text-slate-600 mt-0.5">
+                          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
                             Deep-dive module closing skill gap in <strong>{activeRole.skillGap}</strong>.
                           </p>
                         </div>
                       </div>
 
                       {/* Step 3 */}
-                      <div className="flex items-start gap-4 p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 opacity-80">
-                        <div className="w-8 h-8 rounded-xl bg-slate-300 text-slate-700 flex items-center justify-center shrink-0 font-bold text-xs">
+                      <div className="flex items-start gap-4 p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-700">
+                        <div className="w-8 h-8 rounded-xl bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center shrink-0 font-bold text-xs">
                           3
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-700">Phase 3: Tier-1 Tech Mock Interviews</span>
-                            <span className="text-[11px] text-slate-500 font-semibold">Scheduled Week 4</span>
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">Phase 3: Tier-1 Tech Mock Interviews</span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">Scheduled Week 4</span>
                           </div>
                           <p className="text-xs text-slate-500 mt-0.5">
                             AI-evaluated behavioral and technical system design voice sessions.
@@ -687,11 +687,11 @@ const Home = () => {
           {/* Keyframe Styles for Laser & Waveform */}
           <style dangerouslySetInnerHTML={{__html: `
             @keyframes laserScan {
-              0% { top: 0%; opacity: 0.2; }
+              0% { transform: translate3d(0, 0px, 0); opacity: 0.2; }
               20% { opacity: 1; }
-              50% { top: 85%; opacity: 0.9; }
+              50% { transform: translate3d(0, 200px, 0); opacity: 0.9; }
               80% { opacity: 1; }
-              100% { top: 0%; opacity: 0.2; }
+              100% { transform: translate3d(0, 0px, 0); opacity: 0.2; }
             }
             @keyframes waveform {
               0% { transform: scaleY(0.4); }
@@ -703,7 +703,7 @@ const Home = () => {
       </section>
 
       {/* 3. The 4 Core Sessions Inside SkillMatch */}
-      <section className="py-20 bg-white border-y border-slate-100 relative overflow-hidden">
+      <section className="py-20 bg-white border-y border-slate-100 relative overflow-hidden scroll-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -895,7 +895,7 @@ const Home = () => {
       </section>
 
       {/* 3.5 About Section */}
-      <section id="about" className="py-24 bg-white relative overflow-hidden">
+      <section id="about" className="py-24 bg-white relative overflow-hidden scroll-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="lg:w-1/2">
@@ -964,7 +964,7 @@ const Home = () => {
       </section>
 
       {/* 4. How It Works */}
-      <section id="how-it-works" className="py-24 bg-slate-50">
+      <section id="how-it-works" className="py-24 bg-slate-50 scroll-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">How It Works</h2>
@@ -996,7 +996,7 @@ const Home = () => {
       </section>
 
       {/* 5. Features Section */}
-      <section id="features" className="py-24 bg-white">
+      <section id="features" className="py-24 bg-white scroll-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Powerful Features</h2>
@@ -1026,7 +1026,7 @@ const Home = () => {
       </section>
 
       {/* 6. AI Capabilities & 7. Dashboard Preview */}
-      <section id="ai-capabilities" className="py-24 bg-slate-900 text-white overflow-hidden">
+      <section id="ai-capabilities" className="py-24 bg-slate-900 text-white overflow-hidden scroll-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             
@@ -1107,7 +1107,7 @@ const Home = () => {
       </section>
 
       {/* 8. CTA Section */}
-      <section className="py-24 bg-white text-center relative overflow-hidden">
+      <section className="py-24 bg-white text-center relative overflow-hidden scroll-section">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-indigo-50 rounded-full  -z-10"></div>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6">

@@ -11,6 +11,7 @@ const MainLayout = () => {
   const location = useLocation();
 
   const handleNewsletterSubmit = (e) => {
+    
     e.preventDefault();
     if (!newsletterEmail) return;
     setSubscribed(true);
@@ -43,14 +44,14 @@ const MainLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 overflow-x-clip">
       {/* Header */}
-      <header className="fixed w-full top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200">
+      <header className="fixed w-full top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 [transform:translateZ(0)] will-change-transform">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <NavLink 
-              to="/" 
+            <NavLink
+              to="/"
               className="flex items-center gap-2 group"
               onClick={scrollToTop}
             >
@@ -64,26 +65,26 @@ const MainLayout = () => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-8">
-              <button 
-                onClick={() => navigateToSection('about')} 
+              <button
+                onClick={() => navigateToSection('about')}
                 className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors cursor-pointer"
               >
                 About
               </button>
-              <button 
-                onClick={() => navigateToSection('how-it-works')} 
+              <button
+                onClick={() => navigateToSection('how-it-works')}
                 className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors cursor-pointer"
               >
                 How It Works
               </button>
-              <button 
-                onClick={() => navigateToSection('features')} 
+              <button
+                onClick={() => navigateToSection('features')}
                 className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors cursor-pointer"
               >
                 Features
               </button>
-              <button 
-                onClick={() => navigateToSection('ai-capabilities')} 
+              <button
+                onClick={() => navigateToSection('ai-capabilities')}
                 className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors cursor-pointer"
               >
                 AI Capabilities
@@ -98,7 +99,7 @@ const MainLayout = () => {
 
             {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center">
-              <button 
+              <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="text-slate-600 hover:text-indigo-600 focus:outline-none p-1"
                 aria-label="Toggle menu"
@@ -112,26 +113,26 @@ const MainLayout = () => {
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
           <div className="md:hidden bg-white border-b border-slate-200 px-4 pt-2 pb-4 space-y-1 shadow-lg absolute w-full animate-in fade-in slide-in-from-top-2">
-            <button 
-              onClick={() => navigateToSection('about')} 
+            <button
+              onClick={() => navigateToSection('about')}
               className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-indigo-600 hover:bg-indigo-50"
             >
               About
             </button>
-            <button 
-              onClick={() => navigateToSection('how-it-works')} 
+            <button
+              onClick={() => navigateToSection('how-it-works')}
               className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-indigo-600 hover:bg-indigo-50"
             >
               How It Works
             </button>
-            <button 
-              onClick={() => navigateToSection('features')} 
+            <button
+              onClick={() => navigateToSection('features')}
               className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-indigo-600 hover:bg-indigo-50"
             >
               Features
             </button>
-            <button 
-              onClick={() => navigateToSection('ai-capabilities')} 
+            <button
+              onClick={() => navigateToSection('ai-capabilities')}
               className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:text-indigo-600 hover:bg-indigo-50"
             >
               AI Capabilities
@@ -143,16 +144,16 @@ const MainLayout = () => {
           </div>
         )}
       </header>
-      
+
       {/* Main Content */}
       <main className="flex-grow flex flex-col pt-16">
         <Outlet />
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-900 border-t border-slate-800 pt-16 pb-8 text-slate-300">
+      <footer className="bg-slate-900 border-t border-slate-800 pt-16 pb-8 text-slate-300 scroll-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+
           {/* Newsletter / Stay Ahead Banner */}
           <div className="mb-14 p-6 sm:p-8 rounded-2xl bg-gradient-to-r from-slate-800/90 via-slate-800 to-indigo-950/60 border border-slate-700/60 shadow-xl flex flex-col lg:flex-row items-center justify-between gap-6">
             <div className="max-w-xl text-center lg:text-left">
@@ -170,7 +171,7 @@ const MainLayout = () => {
             <form onSubmit={handleNewsletterSubmit} className="w-full lg:w-auto flex flex-col sm:flex-row gap-3">
               <div className="relative min-w-[280px]">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input 
+                <input
                   type="email"
                   required
                   value={newsletterEmail}
@@ -179,7 +180,7 @@ const MainLayout = () => {
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-inner"
                 />
               </div>
-              <Button 
+              <Button
                 type="submit"
                 variant="primary"
                 className="whitespace-nowrap px-5 py-2.5 shadow-md hover:shadow-indigo-500/25 cursor-pointer"
@@ -191,10 +192,10 @@ const MainLayout = () => {
 
           {/* 5-Column Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10 mb-14">
-            
+
             {/* Column 1: Brand & Bio */}
             <div className="sm:col-span-2 lg:col-span-1">
-              <div 
+              <div
                 className="flex items-center gap-2 mb-4 cursor-pointer group inline-flex"
                 onClick={() => {
                   if (location.pathname !== '/') navigate('/');
@@ -211,10 +212,10 @@ const MainLayout = () => {
               <p className="text-slate-400 text-sm leading-relaxed mb-6">
                 Intelligent AI career intelligence. Analyze resumes, discover critical skill gaps, match with real jobs, and master technical interviews.
               </p>
-              
+
               {/* Social Icons */}
               <div className="flex space-x-3 mb-6">
-                <button 
+                <button
                   onClick={() => {
                     if (location.pathname !== '/') navigate('/');
                     scrollToTop();
@@ -224,10 +225,10 @@ const MainLayout = () => {
                 >
                   <Globe className="h-4 w-4" />
                 </button>
-                <a 
-                  href="https://github.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href="https://github.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   title="GitHub"
                   className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all"
                 >
@@ -235,10 +236,10 @@ const MainLayout = () => {
                     <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
                   </svg>
                 </a>
-                <a 
-                  href="https://linkedin.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href="https://linkedin.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   title="LinkedIn"
                   className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all"
                 >
@@ -246,10 +247,10 @@ const MainLayout = () => {
                     <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                   </svg>
                 </a>
-                <a 
-                  href="https://x.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href="https://x.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   title="X (Twitter)"
                   className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all"
                 >
@@ -264,7 +265,7 @@ const MainLayout = () => {
                 100% Privacy Protected
               </div>
             </div>
-            
+
             {/* Column 2: Platform Solutions */}
             <div>
               <h3 className="font-semibold text-white mb-5 uppercase tracking-wider text-xs">Platform</h3>
@@ -307,11 +308,11 @@ const MainLayout = () => {
               <h3 className="font-semibold text-white mb-5 uppercase tracking-wider text-xs">Resources</h3>
               <ul className="space-y-3 text-sm">
                 <li>
-                  <Link 
-                    to="/docs" 
+                  <Link
+                    to="/docs"
                     className="hover:text-indigo-400 transition-colors inline-flex items-center gap-1 group"
                   >
-                    Documentation 
+                    Documentation
                     <ExternalLink className="h-3 w-3 text-slate-500 group-hover:text-indigo-400 transition-colors" />
                   </Link>
                 </li>
@@ -326,16 +327,16 @@ const MainLayout = () => {
                   </Link>
                 </li>
                 <li>
-                  <button 
-                    onClick={() => navigateToSection('how-it-works')} 
+                  <button
+                    onClick={() => navigateToSection('how-it-works')}
                     className="hover:text-indigo-400 transition-colors text-left"
                   >
                     How It Works
                   </button>
                 </li>
                 <li>
-                  <button 
-                    onClick={() => navigateToSection('features')} 
+                  <button
+                    onClick={() => navigateToSection('features')}
                     className="hover:text-indigo-400 transition-colors text-left"
                   >
                     Platform Features
@@ -382,12 +383,12 @@ const MainLayout = () => {
               <div className="space-y-4 text-sm">
                 <div>
                   <span className="text-xs text-slate-400 block mb-1">Direct Support</span>
-                  <a 
-                    href="mailto:support@skillmatchai.com" 
+                  <a
+                    href="mailto:girimsabari7@gmail.com"
                     className="text-white hover:text-indigo-400 transition-colors inline-flex items-center gap-2"
                   >
                     <Mail className="h-4 w-4 text-indigo-400" />
-                    <span>support@skillmatchai.com</span>
+                    <span>girimsabari7@gmail.com</span>
                   </a>
                 </div>
 
@@ -403,7 +404,7 @@ const MainLayout = () => {
             </div>
 
           </div>
-          
+
           {/* Bottom Bar */}
           <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
@@ -423,7 +424,7 @@ const MainLayout = () => {
               </div>
 
               {/* Back to top button */}
-              <button 
+              <button
                 onClick={scrollToTop}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition-all text-xs font-medium cursor-pointer"
               >

@@ -70,13 +70,54 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<AuthResponse> resetPassword(@RequestBody Map<String, String> request) {
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> request) {
         String email = request.get("email");
-        String newPassword = request.get("newPassword");
-        if (email == null || newPassword == null || newPassword.isBlank()) {
-            return ResponseEntity.badRequest().build();
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email is required."));
         }
+        
+        email = email.trim().toLowerCase();
+        if (!authService.checkEmailExists(email)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "No account found with this email address. Please check your spelling or register."));
+        }
+
+        try {
+            otpService.generateAndSendPasswordResetOtp(email);
+            return ResponseEntity.ok(Map.of("message", "A 6-digit verification code has been sent to your email."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Unable to send verification email. Please try again later."));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        String otp = request.get("otp");
+        String newPassword = request.get("newPassword");
+
+        if (email == null || email.isBlank() || newPassword == null || newPassword.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email and new password are required."));
+        }
+
+        email = email.trim().toLowerCase();
+
+        if (otp == null || otp.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Verification code (OTP) is required."));
+        }
+
+        if (newPassword.length() < 6) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Password must be at least 6 characters."));
+        }
+
+        boolean isValid = otpService.verifyOtp(email, otp.trim());
+        if (!isValid) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Invalid or expired verification code. Please check your email or request a new code."));
+        }
+
         AuthResponse response = authService.resetPassword(email, newPassword);
         return ResponseEntity.ok(response);
     }

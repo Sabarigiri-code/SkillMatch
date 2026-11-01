@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useWorkspace } from '../context/WorkspaceContext';
 import axios from 'axios';
 import { 
   Search, Building2, Briefcase, FileText, Sparkles, 
-  CheckCircle2, PlusCircle, Wrench, Clock, GraduationCap, Users, Target, AlertCircle, ArrowRight
+  CheckCircle2, PlusCircle, Wrench, Clock, GraduationCap, Users, Target, AlertCircle, ArrowRight,
+  Upload, X, FileCheck
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
 import Input from '../components/Input';
@@ -22,6 +23,7 @@ const JobAnalyzer = () => {
   const { setActiveJobMatchId } = useWorkspace();
   const location = useLocation();
   const initialResumeId = location.state?.resumeId || null;
+  const pdfInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     company: location.state?.company || '',
@@ -33,6 +35,8 @@ const JobAnalyzer = () => {
   const [hasResults, setHasResults] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
+  const [pdfFile, setPdfFile] = useState(null);
+  const [isPdfParsing, setIsPdfParsing] = useState(false);
   
   const [jobResult, setJobResult] = useState(null);
   const [matchResult, setMatchResult] = useState(null);
@@ -78,6 +82,82 @@ const JobAnalyzer = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const extractFieldFromText = (text, patterns) => {
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        // Clean up the extracted value - take only the first meaningful chunk
+        const value = match[1].trim().split(/\s{2,}|\n/)[0].trim();
+        if (value.length > 1 && value.length < 100) return value;
+      }
+    }
+    return '';
+  };
+
+  const handlePdfUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || file.type !== 'application/pdf') {
+      setError('Please upload a valid PDF file.');
+      return;
+    }
+    setPdfFile(file);
+    setIsPdfParsing(true);
+    setError('');
+
+    try {
+      const pdfjsLib = await import('pdfjs-dist');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join(' ');
+        fullText += pageText + '\n';
+      }
+
+      const extracted = fullText.trim();
+
+      // Auto-extract Company Name
+      const companyPatterns = [
+        /(?:Name of the Company|Company Name|Company|Organisation|Organization|Employer|Client)\s*[:\-]?\s*([A-Za-z0-9&\s,.()\-]+?)(?:\s{2,}|\n|Location|Date|$)/i,
+        /^([A-Z][A-Za-z0-9\s&.,]+(?:Pvt\.?\s*Ltd\.?|Inc\.?|Corp\.?|Technologies|Solutions|Systems|Services|Infotech|InfoTech|Software|Digital|Global|Group))/m,
+      ];
+
+      // Auto-extract Job Title / Role
+      const titlePatterns = [
+        /(?:Job Role|Job Title|Position|Role|Designation|Post|Vacancy|Hiring for)\s*[:\-]?\s*([A-Za-z][A-Za-z0-9\s\/\-,&]+?)(?:\s{2,}|\d{2,}|\n|Eligib|Batch|Depart|Qualif|$)/i,
+        /(?:We are hiring|Looking for|Requirement for|Opening for|Recruiting for)\s*(?:a\s+|an\s+)?([A-Za-z][A-Za-z0-9\s\/\-]+?)(?:\s{2,}|\n|at\s|in\s|for\s|with\s)/i,
+      ];
+
+      const extractedCompany = extractFieldFromText(extracted, companyPatterns);
+      const extractedTitle = extractFieldFromText(extracted, titlePatterns);
+
+      setFormData(prev => ({
+        ...prev,
+        description: extracted,
+        company: extractedCompany || prev.company,
+        title: extractedTitle || prev.title,
+      }));
+    } catch (err) {
+      console.error('PDF parsing error:', err);
+      setError('Failed to extract text from PDF. Please paste the description manually.');
+      setPdfFile(null);
+    } finally {
+      setIsPdfParsing(false);
+    }
+  };
+
+
+  const clearPdf = () => {
+    setPdfFile(null);
+    setFormData(prev => ({ ...prev, description: '' }));
+    if (pdfInputRef.current) pdfInputRef.current.value = '';
   };
 
   const handleAnalyze = async () => {
@@ -156,6 +236,7 @@ const JobAnalyzer = () => {
     setJobResult(null);
     setMatchResult(null);
     setFormData({ company: '', title: '', description: '' });
+    setPdfFile(null);
     cachedJobData = null;
     cachedMatchData = null;
     cachedFormData = null;
@@ -211,17 +292,51 @@ const JobAnalyzer = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5 flex justify-between">
-                  <span>Job Description <span className="text-rose-500">*</span></span>
-                  <span className="text-xs text-slate-400">Paste the full description</span>
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-sm font-medium text-slate-700">
+                    Job Description <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {pdfFile ? (
+                      <div className="flex items-center gap-2 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg">
+                        <FileCheck className="h-3.5 w-3.5" />
+                        <span className="max-w-[140px] truncate font-medium">{pdfFile.name}</span>
+                        <button onClick={clearPdf} className="text-emerald-500 hover:text-rose-500 transition-colors ml-1">
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => pdfInputRef.current?.click()}
+                        disabled={isPdfParsing}
+                        className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-800 border border-indigo-200 hover:border-indigo-400 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-all"
+                      >
+                        {isPdfParsing ? (
+                          <><div className="h-3.5 w-3.5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" /> Extracting...</>
+                        ) : (
+                          <><Upload className="h-3.5 w-3.5" /> Upload JD PDF</>
+                        )}
+                      </button>
+                    )}
+                    <input
+                      ref={pdfInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      onChange={handlePdfUpload}
+                      className="hidden"
+                    />
+                    <span className="text-xs text-slate-400">or paste below</span>
+                  </div>
+                </div>
                 <textarea 
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
                   rows={10} 
                   className="w-full rounded-lg border border-slate-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 p-3 text-slate-700 font-sans outline-none resize-y"
-                  placeholder="Paste the job description here..."
+                  placeholder={isPdfParsing ? "Extracting text from PDF..." : "Paste the job description here, or upload a PDF above..."}
+                  disabled={isPdfParsing}
                 ></textarea>
               </div>
 

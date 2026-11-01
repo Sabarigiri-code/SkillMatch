@@ -193,9 +193,9 @@ const Documentation = () => {
                 <div className="text-emerald-300 ml-2">• jobDescription: "Senior Full Stack Engineer..."</div>
               </div>
 
-              <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-sm text-indigo-950">
-                <h4 className="font-semibold mb-1">ATS Score Calculation Factors:</h4>
-                <p className="text-slate-700">
+              <div className="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-800/80 rounded-xl p-4 text-sm text-indigo-950 dark:text-indigo-100">
+                <h4 className="font-semibold mb-1 text-indigo-950 dark:text-indigo-100">ATS Score Calculation Factors:</h4>
+                <p className="text-slate-700 dark:text-slate-200">
                   Scores range from 0 to 100 based on exact skill matches (40%), contextual experience alignment (30%), domain familiarity (20%), and role seniority relevance (10%).
                 </p>
               </div>

@@ -20,11 +20,17 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      // Token expired or invalid
+    // Only redirect if 401 occurs on protected data endpoints, NEVER on auth requests (login/register/reset)
+    const requestUrl = error.config?.url || '';
+    const isAuthEndpoint = requestUrl.includes('/auth/');
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    const isAuthPage = currentPath.includes('/login') || currentPath.includes('/register');
+
+    if (error.response && error.response.status === 401 && !isAuthEndpoint && !isAuthPage) {
+      // Token expired or invalid on a protected route
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/';
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

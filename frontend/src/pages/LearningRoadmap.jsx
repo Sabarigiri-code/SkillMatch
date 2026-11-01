@@ -7,7 +7,7 @@ import {
   BookOpen, Code, Terminal, PlayCircle, Trophy, AlertCircle, 
   Compass, Printer, ChevronDown, ChevronUp, Zap, Star, ArrowRight,
   Calendar, Sparkles, CheckCheck, Briefcase, GraduationCap,
-  Flame, Target, Mic, FileText
+  Flame, Target, Mic, FileText, X
 } from 'lucide-react';
 import { Card, CardContent } from '../components/Card';
 import Button from '../components/Button';
@@ -18,28 +18,28 @@ import EmptyState from '../components/EmptyState';
 
 const statusConfig = {
   completed: {
-    border: 'border-emerald-300',
-    bg: 'bg-gradient-to-r from-emerald-50 to-teal-50',
-    badge: 'bg-emerald-500 text-white',
+    border: 'border-emerald-300 dark:border-emerald-600/50',
+    bg: 'bg-gradient-to-r from-emerald-50/90 to-teal-50/60 dark:from-emerald-950/70 dark:to-teal-950/60',
+    badge: 'bg-emerald-500 text-white font-bold',
     badgeLabel: 'Completed',
-    dot: 'bg-emerald-500 ring-4 ring-emerald-100',
+    dot: 'bg-emerald-500 ring-4 ring-emerald-100 dark:ring-emerald-900/60 text-white',
     numberClass: 'text-white',
   },
   current: {
-    border: 'border-indigo-400',
-    bg: 'bg-gradient-to-r from-indigo-50/80 to-violet-50/80',
-    badge: 'bg-indigo-600 text-white',
+    border: 'border-indigo-400 dark:border-indigo-500/60',
+    bg: 'bg-gradient-to-r from-indigo-50/90 to-violet-50/80 dark:from-indigo-950/80 dark:to-violet-950/70',
+    badge: 'bg-indigo-600 text-white font-bold shadow-xs',
     badgeLabel: 'Active Sprint',
-    dot: 'bg-indigo-600 ring-4 ring-indigo-100',
+    dot: 'bg-indigo-600 ring-4 ring-indigo-100 dark:ring-indigo-900/60 text-white shadow-sm',
     numberClass: 'text-white',
   },
   locked: {
-    border: 'border-slate-200',
-    bg: 'bg-white',
-    badge: 'bg-slate-100 text-slate-500',
-    badgeLabel: 'Upcoming',
-    dot: 'bg-slate-100 ring-4 ring-slate-50 border border-slate-200',
-    numberClass: 'text-slate-500',
+    border: 'border-slate-200 dark:border-slate-700',
+    bg: 'bg-slate-50/80 dark:bg-slate-800/50',
+    badge: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200 font-bold',
+    badgeLabel: 'Locked',
+    dot: 'bg-slate-100 ring-4 ring-slate-100/60 text-slate-500 border border-slate-200 dark:bg-slate-700 dark:ring-slate-800/80 dark:text-slate-300 dark:border-slate-600',
+    numberClass: 'text-slate-600 dark:text-slate-300',
   },
 };
 
@@ -78,6 +78,10 @@ const LearningRoadmap = () => {
   const [driveDate, setDriveDate] = useState(() => getDateAfterDays(10));
   const [showSprintSuccess, setShowSprintSuccess] = useState(false);
 
+  // Sequential task locking & progression states
+  const [lockedFeedback, setLockedFeedback] = useState(null);
+  const [unlockAlert, setUnlockAlert] = useState(null);
+
   const [roadmap, setRoadmap] = useState(() => {
     const saved = localStorage.getItem('activeFlow_roadmap');
     return saved ? JSON.parse(saved) : null;
@@ -85,6 +89,30 @@ const LearningRoadmap = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
+
+  // Handle clicking on a disabled/locked module
+  const handleLockedClick = (e, idx, week) => {
+    if (e) e.stopPropagation();
+    const prevModuleNum = idx; // 1-indexed number of required module
+    const prevSkill = roadmap?.weeks[idx - 1]?.skill || `Module ${prevModuleNum}`;
+    setLockedFeedback({
+      currentModule: idx + 1,
+      currentSkill: week?.skill || `Module ${idx + 1}`,
+      requiredModule: prevModuleNum,
+      requiredSkill: prevSkill
+    });
+    setTimeout(() => {
+      setLockedFeedback(prev => (prev?.currentModule === idx + 1 ? null : prev));
+    }, 4500);
+  };
+
+  // Auto-expand the active incomplete module when roadmap loads
+  useEffect(() => {
+    if (roadmap?.weeks && roadmap.weeks.length > 0) {
+      const activeIdx = roadmap.weeks.findIndex(w => !w.completed);
+      setExpandedWeeks(new Set([activeIdx !== -1 ? activeIdx : 0]));
+    }
+  }, [roadmap?.id]);
 
   // Sync state if roadmap already has saved sprintDays / driveDate
   useEffect(() => {
@@ -314,18 +342,53 @@ const LearningRoadmap = () => {
     if (!roadmap) return;
     try {
       const isCompleted = !currentStatus;
+      const currentIdx = roadmap.weeks.findIndex(w => w.weekNumber === weekNumber);
+
+      // Guard: if trying to complete, verify all preceding modules are already completed
+      if (isCompleted && currentIdx > 0) {
+        const hasUnfinishedPreceding = roadmap.weeks.slice(0, currentIdx).some(w => !w.completed);
+        if (hasUnfinishedPreceding) {
+          handleLockedClick(null, currentIdx, roadmap.weeks[currentIdx]);
+          return;
+        }
+      }
+
       const response = await api.put(
         `/roadmaps/${roadmap.id}/progress?weekNumber=${weekNumber}&completed=${isCompleted}`
       );
       setRoadmap(response.data);
       localStorage.setItem('activeFlow_roadmap', JSON.stringify(response.data));
       window.dispatchEvent(new CustomEvent('roadmap-updated', { detail: response.data }));
+
+      if (isCompleted) {
+        // Automatically expand the next newly unlocked module!
+        const nextIdx = currentIdx + 1;
+        if (nextIdx < roadmap.weeks.length) {
+          setExpandedWeeks(new Set([nextIdx]));
+          const nextSkill = roadmap.weeks[nextIdx]?.skill || `Module ${nextIdx + 1}`;
+          setUnlockAlert({
+            completedModule: currentIdx + 1,
+            unlockedModule: nextIdx + 1,
+            unlockedSkill: nextSkill
+          });
+          setTimeout(() => setUnlockAlert(null), 5000);
+        }
+      } else {
+        // If unmarked complete, expand the uncompleted module and keep subsequent locked modules closed
+        setExpandedWeeks(new Set([currentIdx]));
+      }
     } catch (err) {
       console.error('Failed to update progress', err);
     }
   };
 
   const toggleExpand = (idx) => {
+    // If this week is locked, show locked feedback instead of opening
+    if (idx > 0 && roadmap?.weeks && !roadmap.weeks.slice(0, idx).every(w => w.completed)) {
+      handleLockedClick(null, idx, roadmap.weeks[idx]);
+      return;
+    }
+
     setExpandedWeeks(prev => {
       const next = new Set(prev);
       next.has(idx) ? next.delete(idx) : next.add(idx);
@@ -518,7 +581,7 @@ const LearningRoadmap = () => {
 
       {/* Campus Placement Alert Banner if previously had 29 weeks */}
       {isMultiMonthPlan && (
-        <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border-2 border-amber-400/60 rounded-2xl p-5 text-amber-950 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm print:hidden">
+        <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border-2 border-amber-400/60 rounded-2xl p-5 text-amber-950 dark:text-amber-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm print:hidden">
           <div className="flex items-start gap-3.5">
             <div className="p-3 bg-amber-500 text-white rounded-xl shrink-0 mt-0.5 shadow-md shadow-amber-500/20">
               <Calendar className="h-6 w-6" />
@@ -528,14 +591,14 @@ const LearningRoadmap = () => {
                 <span className="text-xs font-black uppercase tracking-wider bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-full">
                   Campus Drive Timeline Alert
                 </span>
-                <span className="text-xs font-bold text-amber-800">
+                <span className="text-xs font-bold text-amber-800 dark:text-amber-300">
                   ⚡ {sprintDays} Days to Recruitment Drive
                 </span>
               </div>
-              <h4 className="font-extrabold text-base md:text-lg mt-1 text-slate-900">
+              <h4 className="font-extrabold text-base md:text-lg mt-1 text-slate-900 dark:text-white">
                 Current Plan spans {totalWeeks} weeks (~{Math.round(totalWeeks * 7 / 30)} months)
               </h4>
-              <p className="text-sm text-slate-700 mt-1 max-w-2xl leading-relaxed">
+              <p className="text-sm text-slate-700 dark:text-slate-300 mt-1 max-w-2xl leading-relaxed">
                 With your campus drive arriving in <strong>{sprintDays} days</strong>, studying 1 skill per week for {totalWeeks} weeks will take too long. Condense all {totalWeeks} missing skills into an intensive <strong>{sprintDays}-Day Placement Crash Course</strong> containing high-frequency interview questions, rapid coding drills, and project defense scenarios.
               </p>
             </div>
@@ -667,14 +730,14 @@ const LearningRoadmap = () => {
       )}
 
       {/* Placement Roadmap Summary Box */}
-      <div className="bg-indigo-50/70 border border-indigo-100 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-indigo-900">
+      <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-800/80 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-indigo-900 dark:text-indigo-200">
         <div className="flex items-center gap-2">
-          <Briefcase className="h-4 w-4 text-indigo-600 shrink-0" />
+          <Briefcase className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
           <span>
             <strong>Campus Placement Strategy:</strong> Focus 2.5–3 hours daily per module. Review top interview questions & complete the coding scenario before college interviews.
           </span>
         </div>
-        <div className="shrink-0 font-bold bg-white px-3 py-1 rounded-lg border border-indigo-200 text-indigo-700 shadow-sm">
+        <div className="shrink-0 font-bold bg-white dark:bg-slate-800 px-3 py-1 rounded-lg border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 shadow-sm">
           Target: Complete in {activeSprintDays} Days ({driveDate ? `By ${driveDate}` : 'Crash Course'})
         </div>
       </div>
@@ -690,11 +753,14 @@ const LearningRoadmap = () => {
         </h2>
 
         {roadmap.weeks && roadmap.weeks.map((week, idx) => {
+          const isFirstModule = idx === 0;
+          const isPrerequisiteMet = isFirstModule || roadmap.weeks.slice(0, idx).every(w => w.completed);
           const isCompleted = week.completed;
-          const isCurrent = !isCompleted && (idx === 0 || roadmap.weeks[idx - 1]?.completed);
+          const isEnabled = isPrerequisiteMet;
+          const isCurrent = isEnabled && !isCompleted;
           const status = isCompleted ? 'completed' : isCurrent ? 'current' : 'locked';
           const cfg = statusConfig[status];
-          const isExpanded = expandedWeeks.has(idx);
+          const isExpanded = isEnabled && expandedWeeks.has(idx);
 
           // Calculate exact day ranges (e.g. Days 1–2, Days 3–4, Days 5–6, Days 7–8, Days 9–10)
           const daysPerModule = Math.max(1, Math.round(activeSprintDays / totalWeeks));
@@ -706,77 +772,134 @@ const LearningRoadmap = () => {
             <div
               key={idx}
               className={cn(
-                'week-card rounded-2xl border-2 transition-all duration-300 overflow-hidden shadow-sm hover:shadow-md print:break-inside-avoid print:mb-4',
+                'week-card rounded-2xl border-2 transition-all duration-300 overflow-hidden shadow-sm print:break-inside-avoid print:mb-4',
                 cfg.border,
                 cfg.bg,
-                status === 'locked' && 'opacity-75',
-                isCompleted && 'week-card-completed',
-                isCurrent && 'week-card-current ring-2 ring-indigo-400/30'
+                status === 'locked' && 'week-card-locked shadow-none cursor-not-allowed select-none',
+                isCompleted && 'week-card-completed shadow-xs',
+                isCurrent && 'week-card-current ring-2 ring-indigo-400/30 shadow-md'
               )}
             >
               <div
-                className="flex items-center gap-4 p-5 cursor-pointer select-none"
-                onClick={() => toggleExpand(idx)}
+                className={cn(
+                  "flex items-center gap-4 p-5 select-none transition-colors",
+                  status === 'locked' ? "cursor-not-allowed hover:bg-slate-100/40 dark:hover:bg-slate-800/40" : "cursor-pointer"
+                )}
+                onClick={(e) => {
+                  if (status === 'locked') {
+                    handleLockedClick(e, idx, week);
+                  } else {
+                    toggleExpand(idx);
+                  }
+                }}
               >
                 <div className={cn(
-                  'flex items-center justify-center w-12 h-12 rounded-xl font-extrabold text-lg shrink-0 transition-transform',
+                  'flex items-center justify-center w-12 h-12 rounded-xl font-extrabold text-lg shrink-0 transition-transform shadow-xs',
                   cfg.dot
                 )}>
                   <span className={cfg.numberClass}>
-                    {isCompleted ? <CheckCircle2 className="h-6 w-6" /> : moduleNum}
+                    {isCompleted ? (
+                      <CheckCircle2 className="h-6 w-6 text-white" />
+                    ) : status === 'locked' ? (
+                      <Lock className="h-5 w-5 text-slate-500 dark:text-slate-300" />
+                    ) : (
+                      moduleNum
+                    )}
                   </span>
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="text-xs font-black text-indigo-700 bg-indigo-100/90 px-2.5 py-0.5 rounded-md border border-indigo-200">
+                    <span className={cn(
+                      "text-xs font-black px-2.5 py-0.5 rounded-md border",
+                      status === 'locked' 
+                        ? "text-slate-700 bg-slate-100 border-slate-200 dark:text-slate-200 dark:bg-slate-700/80 dark:border-slate-600" 
+                        : isCompleted 
+                        ? "text-emerald-700 bg-emerald-100/90 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-950/60 dark:border-emerald-800" 
+                        : "text-indigo-700 bg-indigo-100/90 border-indigo-200 dark:text-indigo-300 dark:bg-indigo-950/60 dark:border-indigo-800"
+                    )}>
                       Days {startDay}–{endDay} Target
                     </span>
-                    <h3 className="text-base font-bold text-slate-900">
+                    <h3 className={cn(
+                      "text-base font-bold",
+                      status === 'locked' ? "text-slate-800 dark:text-slate-100" : "text-slate-900 dark:text-white"
+                    )}>
                       Module {moduleNum}: {week.skill}
                     </h3>
-                    <span className={cn('text-[10px] font-bold uppercase px-2 py-0.5 rounded-full tracking-wider', cfg.badge)}>
-                      {cfg.badgeLabel}
+                    <span className={cn('text-[10px] font-bold uppercase px-2 py-0.5 rounded-full tracking-wider flex items-center gap-1', cfg.badge)}>
+                      {status === 'locked' && <Lock className="h-2.5 w-2.5" />}
+                      {status === 'current' && <Zap className="h-2.5 w-2.5" />}
+                      {status === 'completed' && <CheckCircle2 className="h-2.5 w-2.5" />}
+                      {status === 'locked' ? 'Locked' : cfg.badgeLabel}
                     </span>
                   </div>
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
-                    <span className="flex items-center gap-1 text-slate-600 font-semibold">
-                      <Clock className="h-3.5 w-3.5 text-indigo-500" /> {week.estimatedTime || `${Math.round((endDay - startDay + 1) * 3)} hours (Days ${startDay}-${endDay})`}
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 dark:text-slate-200 font-medium">
+                    <span className={cn(
+                      "flex items-center gap-1 font-semibold",
+                      status === 'locked' ? "text-slate-700 dark:text-slate-300" : "text-slate-700 dark:text-slate-100"
+                    )}>
+                      <Clock className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" /> {week.estimatedTime || `${Math.round((endDay - startDay + 1) * 3)} hours (Days ${startDay}-${endDay})`}
                     </span>
                     {week.topics && week.topics.length > 0 && (
-                      <span className="flex items-center gap-1">
-                        <BookOpen className="h-3.5 w-3.5 text-slate-400" /> {week.topics.length} key topics & interview focus areas
+                      <span className="flex items-center gap-1 text-slate-600 dark:text-slate-200">
+                        <BookOpen className="h-3.5 w-3.5 text-slate-500 dark:text-slate-300" /> {week.topics.length} key topics & interview focus areas
+                      </span>
+                    )}
+                    {status === 'locked' && (
+                      <span className="text-[11px] font-semibold text-amber-800 bg-amber-50 dark:text-amber-200 dark:bg-amber-950/70 px-2.5 py-0.5 rounded-md border border-amber-200 dark:border-amber-700/80 inline-flex items-center gap-1 shadow-xs">
+                        <Lock className="h-3 w-3 text-amber-600 dark:text-amber-400" /> Complete Module {idx} first to enable
                       </span>
                     )}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 print:hidden">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleStatus(week.weekNumber, week.completed); }}
-                    className={cn(
-                      'p-2 rounded-full transition-colors',
-                      isCompleted
-                        ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'
-                        : 'bg-white text-slate-400 hover:bg-indigo-100 hover:text-indigo-600 border border-slate-200'
+                  {status === 'locked' ? (
+                    <button
+                      type="button"
+                      onClick={(e) => handleLockedClick(e, idx, week)}
+                      className="p-2 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200 dark:bg-slate-700/60 dark:text-slate-300 dark:border-slate-600 cursor-not-allowed transition-all"
+                      title={`Locked: Complete Module ${idx} (${roadmap.weeks[idx - 1]?.skill}) first to unlock`}
+                    >
+                      <Lock className="h-5 w-5 text-slate-500 dark:text-slate-300" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); toggleStatus(week.weekNumber, week.completed); }}
+                      className={cn(
+                        'p-2 rounded-full transition-all cursor-pointer shadow-xs',
+                        isCompleted
+                          ? 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200 hover:scale-105 dark:bg-emerald-900/70 dark:text-emerald-300 dark:hover:bg-emerald-800 dark:border dark:border-emerald-700/60'
+                          : 'bg-white text-indigo-600 hover:bg-indigo-50 border border-indigo-200 hover:scale-105 dark:bg-slate-800 dark:text-indigo-300 dark:border-indigo-700/60 dark:hover:bg-indigo-950/60'
+                      )}
+                      title={isCompleted ? 'Mark module as incomplete' : 'Mark module as completed'}
+                    >
+                      {isCompleted ? <CheckCircle2 className="h-5 w-5" /> : <CircleDashed className="h-5 w-5" />}
+                    </button>
+                  )}
+                  <div className={cn(
+                    "p-1 transition-colors",
+                    status === 'locked' ? "text-slate-400 dark:text-slate-400 cursor-not-allowed" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                  )}>
+                    {status === 'locked' ? (
+                      <Lock className="h-4 w-4 text-slate-400 dark:text-slate-400" />
+                    ) : isExpanded ? (
+                      <ChevronUp className="h-5 w-5" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5" />
                     )}
-                    title={isCompleted ? 'Mark module as incomplete' : 'Mark module as completed'}
-                  >
-                    {isCompleted ? <CheckCircle2 className="h-5 w-5" /> : <CircleDashed className="h-5 w-5" />}
-                  </button>
-                  <div className="text-slate-400 hover:text-slate-600 transition-colors p-1">
-                    {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                   </div>
                 </div>
               </div>
 
               {(isExpanded) && (
-                <div className="border-t border-slate-200/80 p-5 print:block bg-white/60">
+                <div className="border-t border-slate-200/80 dark:border-slate-700 p-5 print:block bg-white/60 dark:bg-slate-900/40">
                   <div className="grid md:grid-cols-3 gap-5">
                     {/* Topics and Interview Focus */}
                     <div className="min-w-0">
-                      <div className="week-section-label text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                        <BookOpen className="h-3.5 w-3.5 text-indigo-600 print:hidden" /> Key Placement Topics & Interview Concepts
+                      <div className="week-section-label text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                        <BookOpen className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400 print:hidden" /> Key Placement Topics & Interview Concepts
                       </div>
                       <div className="flex flex-col gap-2.5">
                         {week.topics && week.topics.length > 0 ? (
@@ -792,24 +915,24 @@ const LearningRoadmap = () => {
                                 className={cn(
                                   "text-xs p-3 rounded-xl border shadow-xs transition-all w-full min-w-0 overflow-hidden flex flex-col gap-2",
                                   isInterview
-                                    ? "bg-violet-50/90 border-violet-200/90 text-violet-950"
-                                    : "bg-white border-slate-200 text-slate-700"
+                                    ? "bg-violet-50/90 border-violet-200/90 text-violet-950 dark:bg-violet-950/40 dark:border-violet-800/80 dark:text-violet-200"
+                                    : "bg-white border-slate-200 text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
                                 )}
                               >
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <span className={cn(
                                     "text-[10px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider shrink-0 inline-flex items-center gap-1 shadow-xs",
-                                    isInterview ? "bg-violet-600 text-white" : "bg-slate-100 text-slate-600 border border-slate-200"
+                                    isInterview ? "bg-violet-600 text-white" : "bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600"
                                   )}>
                                     {isInterview ? '🎯 Interview Concept' : `Topic ${i + 1}`}
                                   </span>
                                 </div>
-                                <div className="font-medium text-xs leading-relaxed text-slate-800 break-words [overflow-wrap:anywhere] [word-break:break-word]">
+                                <div className="font-medium text-xs leading-relaxed text-slate-800 dark:text-slate-200 break-words [overflow-wrap:anywhere] [word-break:break-word]">
                                   {mainText}
                                 </div>
                                 {interviewQuestion && (
-                                  <div className="p-2.5 rounded-lg bg-violet-100/70 border border-violet-200/80 text-[11px] text-violet-950 font-normal leading-relaxed break-words [overflow-wrap:anywhere] [word-break:break-word]">
-                                    <span className="font-bold text-violet-700 block mb-0.5">Interview Question:</span>
+                                  <div className="p-2.5 rounded-lg bg-violet-100/70 border border-violet-200/80 text-[11px] text-violet-950 dark:bg-violet-900/30 dark:border-violet-700/60 dark:text-violet-200 font-normal leading-relaxed break-words [overflow-wrap:anywhere] [word-break:break-word]">
+                                    <span className="font-bold text-violet-700 dark:text-violet-300 block mb-0.5">Interview Question:</span>
                                     {interviewQuestion.replace(/^['"]|['"]$/g, '')}
                                   </div>
                                 )}
@@ -824,8 +947,8 @@ const LearningRoadmap = () => {
 
                     {/* Practical Coding Task / Drill */}
                     <div className="min-w-0">
-                      <div className="week-section-label text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                        <Terminal className="h-3.5 w-3.5 text-emerald-600 print:hidden" /> Hands-On Placement Coding Drill
+                      <div className="week-section-label text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                        <Terminal className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 print:hidden" /> Hands-On Placement Coding Drill
                       </div>
                       <div className="task-box bg-slate-900 text-emerald-400 rounded-xl p-4 text-xs font-mono leading-relaxed shadow-sm border border-slate-800 break-words [overflow-wrap:anywhere] [word-break:break-word]">
                         <div className="text-[10px] text-slate-400 mb-1 flex items-center gap-1 font-sans uppercase font-bold">
@@ -839,40 +962,40 @@ const LearningRoadmap = () => {
 
                     {/* Capstone Project Highlight */}
                     <div className="min-w-0">
-                      <div className="week-section-label text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                        <Trophy className="h-3.5 w-3.5 text-amber-500 print:hidden" /> Capstone Project Defense
+                      <div className="week-section-label text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                        <Trophy className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400 print:hidden" /> Capstone Project Defense
                       </div>
-                      <div className="project-box bg-gradient-to-br from-indigo-50 to-violet-50 rounded-xl border border-indigo-200 p-4 text-xs text-indigo-950 leading-relaxed shadow-sm break-words [overflow-wrap:anywhere] [word-break:break-word]">
-                        <div className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
+                      <div className="project-box bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-950/40 dark:to-violet-950/40 rounded-xl border border-indigo-200 dark:border-indigo-800/80 p-4 text-xs text-indigo-950 dark:text-indigo-200 leading-relaxed shadow-sm break-words [overflow-wrap:anywhere] [word-break:break-word]">
+                        <div className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
                           <Sparkles className="h-3 w-3" /> Resume Project Defense:
                         </div>
-                        <p className="font-medium text-slate-800 break-words [overflow-wrap:anywhere] [word-break:break-word]">
+                        <p className="font-medium text-slate-800 dark:text-slate-200 break-words [overflow-wrap:anywhere] [word-break:break-word]">
                           {week.project || 'Resume project showcase to discuss with the technical interviewer.'}
                         </p>
-                        <div className="mt-3 pt-2.5 border-t border-indigo-100 flex items-center justify-between text-[11px] text-indigo-700 font-semibold">
+                        <div className="mt-3 pt-2.5 border-t border-indigo-100 dark:border-indigo-900/60 flex items-center justify-between text-[11px] text-indigo-700 dark:text-indigo-300 font-semibold">
                           <span>Interview Round Focus</span>
-                          <span className="bg-white px-2 py-0.5 rounded border border-indigo-200">STAR Method</span>
+                          <span className="bg-white dark:bg-slate-800 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-700">STAR Method</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Module Checkpoint Bridges: Assessment & Interview Prep */}
-                  <div className="mt-5 pt-3.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 print:hidden">
-                    <div className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-                      <Target className="h-4 w-4 text-indigo-600" />
+                  <div className="mt-5 pt-3.5 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 print:hidden">
+                    <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                      <Target className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                       <span>Ready for Days {startDay}–{endDay} verification?</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => navigate('/dashboard/assessment', { state: { skill: week.skill, roadmapId: roadmap.id } })}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200 transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-200 dark:border-indigo-800 font-bold text-xs border border-indigo-200 transition-colors cursor-pointer"
                       >
                         <FileText className="h-3.5 w-3.5" /> Checkpoint Quiz
                       </button>
                       <button
                         onClick={() => navigate('/dashboard/interview', { state: { jobTitle: roadmap.targetRole, skill: week.skill } })}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs border border-emerald-200 transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 dark:text-emerald-200 dark:border-emerald-800 font-bold text-xs border border-emerald-200 transition-colors cursor-pointer"
                       >
                         <Mic className="h-3.5 w-3.5" /> Voice Mock Interview
                       </button>
@@ -934,6 +1057,48 @@ const LearningRoadmap = () => {
           Start Mock Assessment <ArrowRight className="h-4 w-4" />
         </button>
       </div>
+
+      {/* Floating Alert: Sequential Unlock Toast */}
+      {unlockAlert && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300 max-w-md bg-emerald-950 text-white p-4 rounded-2xl shadow-2xl border border-emerald-500/40 flex items-start gap-3">
+          <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-xl shrink-0">
+            <CheckCircle2 className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-0.5">Next Module Unlocked!</h4>
+            <p className="text-xs text-emerald-100 leading-relaxed">
+              Great progress! <strong>Module {unlockAlert.completedModule}</strong> completed. <strong>Module {unlockAlert.unlockedModule}: {unlockAlert.unlockedSkill}</strong> is now unlocked and ready.
+            </p>
+          </div>
+          <button 
+            onClick={() => setUnlockAlert(null)}
+            className="text-emerald-400 hover:text-white p-1 rounded-lg transition-colors shrink-0 cursor-pointer"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Floating Alert: Prerequisite Required Toast */}
+      {lockedFeedback && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300 max-w-md bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border border-amber-500/40 flex items-start gap-3">
+          <div className="p-2 bg-amber-500/20 text-amber-400 rounded-xl shrink-0">
+            <Lock className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-xs font-bold text-amber-300 uppercase tracking-wider mb-0.5">Prerequisite Required</h4>
+            <p className="text-xs text-slate-200 leading-relaxed">
+              <strong>Module {lockedFeedback.currentModule}</strong> is locked. Please complete <strong>Module {lockedFeedback.requiredModule}: {lockedFeedback.requiredSkill}</strong> first.
+            </p>
+          </div>
+          <button 
+            onClick={() => setLockedFeedback(null)}
+            className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors shrink-0 cursor-pointer"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
     </div>
   );

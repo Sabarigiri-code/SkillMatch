@@ -71,11 +71,11 @@ const PrivacyPolicy = () => {
             <p className="mb-3">
               SkillMatch AI leverages Google Gemini LLMs to parse and analyze unstructured resume text.
             </p>
-            <div className="bg-indigo-50/70 border border-indigo-100 rounded-2xl p-4 space-y-2 text-indigo-950">
+            <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-800/80 rounded-2xl p-4 space-y-2 text-indigo-950 dark:text-indigo-100">
               <div className="font-semibold flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-indigo-600" /> Zero Training Retention Guarantee
+                <CheckCircle2 className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Zero Training Retention Guarantee
               </div>
-              <p className="text-xs text-slate-700 leading-relaxed">
+              <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed">
                 Your uploaded resume text and job descriptions sent to the Google Gemini API are processed ephemerally. They are <strong>never</strong> used to train, retrain, or improve public foundational AI models.
               </p>
             </div>
