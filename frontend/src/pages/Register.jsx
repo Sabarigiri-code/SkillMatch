@@ -116,7 +116,10 @@ const Register = () => {
         await api.post('/auth/send-otp', { email: formData.email });
         setShowOtpModal(true);
       } catch (err) {
-        setErrors({ email: err.response?.data?.message || 'Failed to send OTP. Try again.' });
+        console.error("Registration error:", err);
+        const serverMsg = err.response?.data?.message;
+        const msg = serverMsg || (err.message === 'Network Error' ? 'Cannot reach server. Is backend running on port 8080?' : 'Failed to send OTP. Try again.');
+        setErrors({ email: msg });
       } finally {
         setIsLoading(false);
       }

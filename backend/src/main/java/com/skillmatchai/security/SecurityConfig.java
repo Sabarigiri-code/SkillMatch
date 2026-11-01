@@ -42,6 +42,8 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPoint))
             .authorizeHttpRequests(auth -> auth
+                // Allow CORS preflight requests
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 // Public endpoints
                 .requestMatchers("/api/health", "/api/auth/**").permitAll()
                 // All other requests must be authenticated

@@ -5,5 +5,6 @@ import { defineConfig } from 'vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: '/SkillMatch/',
+  base: process.env.NODE_ENV === 'production' ? '/SkillMatch/' : '/',
 })
+
