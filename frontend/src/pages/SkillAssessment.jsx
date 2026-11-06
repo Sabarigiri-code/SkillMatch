@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useWorkspace } from '../context/WorkspaceContext';
 import axios from 'axios';
+import api from '../utils/api';
 import {
   Target, Zap, ShieldCheck, PlayCircle, Trophy, FileText,
   ArrowRight, ChevronLeft, ChevronRight, CheckCircle2, XCircle,
@@ -72,9 +73,7 @@ const SkillAssessment = () => {
       // If no routing state, lookup roadmap by active workspace or latest available roadmap
       if (!targetRoadmapId) {
         try {
-          const roadmapsRes = await axios.get('http://localhost:8080/api/roadmaps', {
-            headers: { Authorization: `Bearer ${tok()}` }
-          });
+          const roadmapsRes = await api.get('/roadmaps');
           if (roadmapsRes.data && roadmapsRes.data.length > 0) {
             let existing = null;
             if (activeJobMatchId) {
@@ -99,9 +98,7 @@ const SkillAssessment = () => {
       }
 
       try {
-        const res = await axios.get(`http://localhost:8080/api/roadmaps/${targetRoadmapId}`, { 
-          headers: { Authorization: `Bearer ${tok()}` } 
-        });
+        const res = await api.get(`/roadmaps/${targetRoadmapId}`);
         setupFromRoadmap(res.data);
       } catch (err) {
         console.error("Failed to fetch roadmap for assessment", err);
@@ -130,10 +127,9 @@ const SkillAssessment = () => {
     }
 
     try {
-      const res = await axios.post(
-        `http://localhost:8080/api/assessments/${activeAssessment.id}/submit`,
-        { answers: answersRef.current },
-        { headers: { Authorization: `Bearer ${tok()}` } }
+      const res = await api.post(
+        `/assessments/${activeAssessment.id}/submit`,
+        { answers: answersRef.current }
       );
       setResultData(res.data);
       setStep('results');
@@ -193,7 +189,7 @@ const SkillAssessment = () => {
         jobMatchId: activeJobMatchId
       };
       
-      const res = await axios.post('http://localhost:8080/api/assessments/generate', payload, { headers: { Authorization: `Bearer ${tok()}` } });
+      const res = await api.post('/assessments/generate', payload);
       setAssessment(res.data);
       assessmentRef.current = res.data;
       setCurrentIdx(0); 
@@ -230,7 +226,7 @@ const SkillAssessment = () => {
     }
 
     try {
-      const res = await axios.post(`http://localhost:8080/api/assessments/${activeAssessment.id}/submit`, { answers: answersRef.current }, { headers: { Authorization: `Bearer ${tok()}` } });
+      const res = await api.post(`/assessments/${activeAssessment.id}/submit`, { answers: answersRef.current });
       setResultData(res.data);
       setStep('results');
       window.dispatchEvent(new CustomEvent('assessment-completed', { detail: res.data }));

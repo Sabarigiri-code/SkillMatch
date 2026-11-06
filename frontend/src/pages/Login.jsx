@@ -86,6 +86,13 @@ const Login = () => {
 
         navigate(location.state?.returnTo || '/dashboard');
       } catch (err) {
+        if (!err.response) {
+          setErrors({
+            auth: 'Cannot connect to backend server',
+            authDesc: 'Unable to reach the backend API. If you are viewing the live demo on GitHub Pages, the Spring Boot backend is not hosted online. Please run the project locally or deploy the backend to a cloud host (Render/Railway).'
+          });
+          return;
+        }
         const errMsg = err.response?.data?.message || 'Login failed. Please check your credentials.';
         const lower = errMsg.toLowerCase();
 

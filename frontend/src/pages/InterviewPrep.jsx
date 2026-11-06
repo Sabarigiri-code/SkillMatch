@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
+import api from '../utils/api';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { 
@@ -283,9 +284,7 @@ const InterviewPrep = () => {
     const fetchMatches = async () => {
       setIsLoading(true);
       try {
-        const res = await axios.get('http://localhost:8080/api/matches', { 
-          headers: { Authorization: `Bearer ${tok()}` } 
-        });
+        const res = await api.get('/matches');
         const matchData = res.data || [];
         setMatches(matchData);
         
@@ -331,9 +330,7 @@ const InterviewPrep = () => {
       }
       
       const payload = { role: targetRole, focusAreas, jobMatchId: match.id };
-      const res = await axios.post('http://localhost:8080/api/interviews/generate', payload, { 
-        headers: { Authorization: `Bearer ${tok()}` } 
-      });
+      const res = await api.post('/interviews/generate', payload);
       
       setInterviewId(res.data.id);
       setQuestions(res.data.questions || []);
@@ -380,14 +377,11 @@ const InterviewPrep = () => {
         ? { ...answers, [currentQ.id]: currentAnswer } 
         : answers;
       
-      const res = await axios.post(`http://localhost:8080/api/interviews/${interviewId}/evaluate`, 
-        { 
-          answers: currentAnswersMap,
-          audioData: audioRecords,
-          audioDurations: audioDurations
-        }, 
-        { headers: { Authorization: `Bearer ${tok()}` } }
-      );
+      const res = await api.post(`/interviews/${interviewId}/evaluate`, { 
+        answers: currentAnswersMap,
+        audioData: audioRecords,
+        audioDurations: audioDurations
+      });
       
       setEvaluation(res.data);
       setAppState('results');

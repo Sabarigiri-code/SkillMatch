@@ -9,6 +9,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import axios from 'axios';
+import api from '../utils/api';
 
 const PIE_COLORS = ['#10b981', '#cbd5e1']; // Completed, Pending
 
@@ -26,8 +27,8 @@ const ProgressTracker = () => {
         if (!token) return;
 
         const [progressRes, assessRes] = await Promise.all([
-          axios.get('http://localhost:8080/api/progress', { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get('http://localhost:8080/api/assessments/history', { headers: { Authorization: `Bearer ${token}` } })
+          api.get('/progress'),
+          api.get('/assessments/history')
         ]);
 
         setProgressData(progressRes.data);

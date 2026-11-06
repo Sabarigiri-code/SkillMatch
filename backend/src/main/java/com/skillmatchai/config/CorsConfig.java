@@ -21,7 +21,8 @@ public class CorsConfig {
             "http://localhost:5173",
             "http://localhost:*",
             "http://127.0.0.1:*",
-            "https://sabarigiri-code.github.io"
+            "https://sabarigiri-code.github.io",
+            "https://*.github.io"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
@@ -44,7 +45,8 @@ public class CorsConfig {
                             "http://localhost:5173",
                             "http://localhost:*",
                             "http://127.0.0.1:*",
-                            "https://sabarigiri-code.github.io"
+                            "https://sabarigiri-code.github.io",
+                            "https://*.github.io"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                         .allowedHeaders("*")

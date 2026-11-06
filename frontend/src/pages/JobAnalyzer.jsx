@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useWorkspace } from '../context/WorkspaceContext';
 import axios from 'axios';
+import api from '../utils/api';
 import { 
   Search, Building2, Briefcase, FileText, Sparkles, 
   CheckCircle2, PlusCircle, Wrench, Clock, GraduationCap, Users, Target, AlertCircle, ArrowRight,
@@ -48,9 +49,7 @@ const JobAnalyzer = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
         
-        const response = await axios.get('http://localhost:8080/api/resumes', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get('/resumes');
         
         if (response.data && response.data.length > 0) {
           // Auto-select based on routing state, or fallback to the latest
@@ -183,12 +182,10 @@ const JobAnalyzer = () => {
       }, 500);
 
       // Step 1: Analyze Job Description
-      const jobResponse = await axios.post('http://localhost:8080/api/jobs', {
+      const jobResponse = await api.post('/jobs', {
         company: formData.company || 'Unknown Company',
         jobTitle: formData.title || 'Untitled Role',
         jobDescription: formData.description
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
       
       const parsedJobId = jobResponse.data.id;
@@ -199,11 +196,9 @@ const JobAnalyzer = () => {
       setProgress(60);
 
       // Step 2: Automatically calculate ATS Match Score
-      const matchResponse = await axios.post('http://localhost:8080/api/matches', {
+      const matchResponse = await api.post('/matches', {
         resumeId: latestResumeId,
         jobId: parsedJobId
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
 
       setMatchResult(matchResponse.data);
