@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+const defaultBaseUrl = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
+  ? 'https://skillmatch-cj01.onrender.com/api'
+  : 'http://localhost:8080/api';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || defaultBaseUrl,
 });
 
 // Add a request interceptor to add the JWT token
